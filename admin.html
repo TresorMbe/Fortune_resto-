@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fortune Resto - Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --primary: #D4AF37; --dark: #1a1a1a; --sidebar-width: 250px; }
+        body { background: #f8f9fa; font-family: sans-serif; }
+        
+        /* Sidebar desktop */
+        .sidebar { width: var(--sidebar-width); background: var(--dark); color: white; height: 100vh; position: fixed; padding-top: 20px; z-index: 1030; transition: 0.3s; }
+        .sidebar a { color: #ccc; padding: 15px 25px; display: block; text-decoration: none; transition: 0.3s; }
+        .sidebar a:hover, .sidebar a.active { background: rgba(212,175,55,0.1); color: var(--primary); border-left: 4px solid var(--primary); }
+        
+        /* Contenu Principal */
+        .main { margin-left: var(--sidebar-width); padding: 40px; transition: 0.3s; }
+        .stat-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-bottom: 4px solid var(--primary); height: 100%; }
+        .section { display: none; } .section.active { display: block; }
+        .login-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--dark); z-index: 2000; display: flex; align-items: center; justify-content: center; }
+        
+        /* Topbar Mobile */
+        .mobile-header { display: none; background: var(--dark); color: white; padding: 10px 20px; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1020; }
+
+        @media (max-width: 991.98px) {
+            .sidebar { transform: translateX(-100%); width: var(--sidebar-width); }
+            .sidebar.show { transform: translateX(0); }
+            .main { margin-left: 0; padding: 20px; }
+            .mobile-header { display: flex; }
+            td, th { white-space: nowrap; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loginOverlay" class="login-overlay">
+        <div class="bg-white p-4 p-sm-5 rounded-4 shadow-lg text-center" style="width: 90%; max-width: 400px;">
+            <h2 class="mb-4 fw-bold">Accès Admin</h2>
+            <form id="loginForm">
+                <input type="password" id="passInput" class="form-control form-control-lg mb-3" placeholder="Mot de passe" required>
+                <button type="submit" class="btn btn-dark btn-lg w-100">Se Connecter</button>
+                <p id="loginErr" class="text-danger mt-3" style="display:none">Accès refusé</p>
+            </form>
+        </div>
+    </div>
+
+    <div class="mobile-header">
+        <h4 class="m-0 fw-bold" style="color:var(--primary)">Fortune Resto</h4>
+        <button class="btn btn-outline-light btn-sm" id="menuToggle"><i class="fas fa-bars fa-lg"></i></button>
+    </div>
+
+    <div class="sidebar" id="sidebarMenu">
+        <h3 class="text-center mb-5 fw-bold d-none d-lg-block" style="color:var(--primary)">Fortune Resto</h3>
+        <a href="#" class="nav-link active" data-sec="dashboard"><i class="fas fa-chart-line me-2"></i> Dashboard</a>
+        <a href="#" class="nav-link" data-sec="menu"><i class="fas fa-utensils me-2"></i> Menu</a>
+        <a href="#" class="nav-link" data-sec="orders"><i class="fas fa-shopping-bag me-2"></i> Commandes</a>
+        <a href="#" onclick="localStorage.removeItem('token');location.reload()" class="mt-5 text-danger"><i class="fas fa-sign-out-alt me-2"></i> Déconnexion</a>
+    </div>
+
+    <div class="main">
+        
+        <div id="dashboard" class="section active">
+            <h2 class="mb-4 fw-bold">Tableau de Bord</h2>
+            <div class="row g-3">
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <div class="stat-card"><h6>Ventes Totales</h6><h2 id="s-sales" class="fw-bold text-nowrap">0 FCFA</h2></div>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <div class="stat-card"><h6>Commandes</h6><h2 id="s-orders" class="fw-bold">0</h2></div>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <div class="stat-card"><h6>Plats</h6><h2 id="s-menu" class="fw-bold">0</h2></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="menu" class="section">
+            <div class="d-flex flex-column flex-sm-row justify-content-between mb-4 align-items-sm-center gap-3">
+                <h2 class="fw-bold m-0">Gestion Menu</h2>
+                <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#menuModal"><i class="fas fa-plus me-2"></i> Ajouter un plat</button>
+            </div>
+            <div class="table-responsive bg-white rounded-3 shadow-sm p-3">
+                <table class="table align-middle">
+                    <thead><tr><th>Image</th><th>Nom</th><th>Prix</th><th>Statut</th><th>Action</th></tr></thead>
+                    <tbody id="menuTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="orders" class="section">
+            <h2 class="mb-4 fw-bold">Commandes Récentes</h2>
+            <div class="table-responsive bg-white rounded-3 shadow-sm p-3">
+                <table class="table align-middle">
+                    <thead><tr><th>ID</th><th>Client</th><th>Total</th><th>Statut</th><th>Action</th></tr></thead>
+                    <tbody id="ordersTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="menuModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form id="menuForm">
+                    <div class="modal-header"><h5>Ajouter un Plat</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body">
+                        <input type="text" id="m-name" class="form-control mb-3" placeholder="Nom" required>
+                        <textarea id="m-desc" class="form-control mb-3" placeholder="Description"></textarea>
+                        <input type="number" id="m-price" class="form-control mb-3" placeholder="Prix (FCFA)" required>
+                        <input type="text" id="m-cat" class="form-control mb-3" placeholder="Catégorie">
+                        <input type="url" id="m-img" class="form-control mb-3" placeholder="URL Image">
+                    </div>
+                    <div class="modal-footer"><button type="submit" class="btn btn-dark w-100">Enregistrer</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="orderDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Détails de la commande</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Client :</strong> <span id="detClient"></span></p>
+                    <p><strong>ID Commande :</strong> <code id="detID"></code></p>
+                    <hr>
+                    <h6 class="fw-bold">Contenu du panier :</h6>
+                    <div id="detArticles" class="bg-light p-3 rounded border" style="max-height: 200px; overflow-y: auto;">
+                        </div>
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold m-0">Total :</h5>
+                        <h5 class="fw-bold text-success m-0" id="detTotal">0 FCFA</h5>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-dark w-100" data-bs-dismiss="modal">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API = "https://script.google.com/macros/s/AKfycbz2ea0gkxOOcCRkhrjlThdRlkQtmek2h3jvoqVeVuRVfS7WJu5nV8VUFqxYqSwqrM3Q/exec";
+        let token = localStorage.getItem('token');
+        let currentOrders = [];
+
+        if(token) { document.getElementById('loginOverlay').style.display = 'none'; loadStats(); }
+
+        const sidebarMenu = document.getElementById('sidebarMenu');
+        document.getElementById('menuToggle').onclick = (e) => {
+            e.stopPropagation();
+            sidebarMenu.classList.toggle('show');
+        };
+        document.addEventListener('click', (e) => {
+            if (!sidebarMenu.contains(e.target) && sidebarMenu.classList.contains('show')) {
+                sidebarMenu.classList.remove('show');
+            }
+        });
+
+        document.getElementById('loginForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const res = await fetch(`${API}?action=authenticateAdmin`, {
+                method: 'POST', body: JSON.stringify({password: document.getElementById('passInput').value})
+            }).then(r => r.json());
+            if(res.success) { localStorage.setItem('token', res.token); location.reload(); }
+            else { document.getElementById('loginErr').style.display = 'block'; }
+        };
+
+        document.querySelectorAll('.nav-link').forEach(l => l.onclick = (e) => {
+            document.querySelectorAll('.section, .nav-link').forEach(x => x.classList.remove('active'));
+            document.getElementById(l.dataset.sec).classList.add('active');
+            l.classList.add('active');
+            sidebarMenu.classList.remove('show');
+            
+            if(l.dataset.sec === 'dashboard') loadStats();
+            if(l.dataset.sec === 'menu') loadMenu();
+            if(l.dataset.sec === 'orders') loadOrders();
+        });
+
+        function formatPrice(amount) {
+            return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
+        }
+
+        async function loadStats() {
+            try {
+                const s = await fetch(`${API}?action=getStats&token=${token}`).then(r => r.json());
+                document.getElementById('s-sales').innerText = formatPrice(s.totalSales || 0);
+                document.getElementById('s-orders').innerText = s.totalOrders || 0;
+                document.getElementById('s-menu').innerText = s.menuItemsCount || 0;
+            } catch (e) { console.error("Erreur stats", e); }
+        }
+
+        async function loadMenu() {
+            try {
+                const data = await fetch(`${API}?action=getMenu`).then(r => r.json());
+                document.getElementById('menuTable').innerHTML = data.map(i => {
+                    const isVisible = i.Disponible === true || i.Disponible === "Oui" || i.Disponible === "true";
+                    return `
+                        <tr>
+                            <td><img src="${i.Image || 'https://via.placeholder.com/50'}" width="50" height="50" class="rounded" style="object-fit:cover;"></td>
+                            <td class="fw-semibold">${i.Nom}</td>
+                            <td>${formatPrice(parseFloat(i.Prix))}</td>
+                            <td><span class="badge ${isVisible ? 'bg-success' : 'bg-danger'}">${isVisible ? 'Oui' : 'Non'}</span></td>
+                            <td><button class="btn btn-sm btn-outline-danger" onclick="delItem('${i.ID}')"><i class="fas fa-trash"></i></button></td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (e) { console.error("Erreur menu", e); }
+        }
+
+        async function loadOrders() {
+            try {
+                const data = await fetch(`${API}?action=getOrders&token=${token}`).then(r => r.json());
+                currentOrders = data;
+                
+                document.getElementById('ordersTable').innerHTML = data.map((o, index) => {
+                    const orderId = o['ID Commande'] || o.ID;
+                    const clientName = o['Nom Client'] || o.NomClient || "Inconnu";
+                    return `
+                        <tr>
+                            <td><code>${orderId}</code></td>
+                            <td>${clientName}</td>
+                            <td class="fw-bold">${formatPrice(parseFloat(o.Total))}</td>
+                            <td>
+                                <select onchange="updOrder('${orderId}', this.value)" class="form-select form-select-sm" style="width:auto;">
+                                    <option ${o.Statut == 'En attente' ? 'selected' : ''}>En attente</option>
+                                    <option ${o.Statut == 'Prêt' ? 'selected' : ''}>Prêt</option>
+                                    <option ${o.Statut == 'Livré' ? 'selected' : ''}>Livré</option>
+                                </select>
+                            </td>
+                            <td><button class="btn btn-sm btn-dark" onclick="showOrderDetails(${index})">Détails</button></td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (e) { console.error("Erreur commandes", e); }
+        }
+
+        function showOrderDetails(index) {
+            const o = currentOrders[index];
+            if (!o) return;
+
+            document.getElementById('detClient').innerText = o['Nom Client'] || o.NomClient || "Inconnu";
+            document.getElementById('detID').innerText = o['ID Commande'] || o.ID;
+            document.getElementById('detTotal').innerText = formatPrice(parseFloat(o.Total));
+
+            let articlesHTML = "";
+            let articlesList = o.Articles;
+
+            if (typeof articlesList === "string") {
+                try { articlesList = JSON.parse(articlesList); } catch(e) { articlesList = null; }
+            }
+
+            if (Array.isArray(articlesList) && articlesList.length > 0) {
+                articlesHTML = '<ul class="list-unstyled mb-0">';
+                articlesList.forEach(a => {
+                    const name = a.name || a.Nom || a.designation || "Article sans nom";
+                    const qty = a.qty || a.quantite || a.quantity || 1;
+                    articlesHTML += `<li class="mb-2"><strong>${name}</strong> x${qty}</li>`;
+                });
+                articlesHTML += '</ul>';
+            } else if (o.Articles && typeof o.Articles === "string") {
+                articlesHTML = `<div>${o.Articles}</div>`;
+            } else {
+                articlesHTML = '<div class="text-muted style="font-style: italic;">Aucun détail d\'article trouvé.</div>';
+            }
+
+            document.getElementById('detArticles').innerHTML = articlesHTML;
+
+            // CORRECTION ICI : 'bootstrap' avec un b minuscule pour correspondre au script Bootstrap 5
+            const modalElement = document.getElementById('orderDetailsModal');
+            const detailModal = bootstrap.Modal.getOrCreateInstance(modalElement);
+            detailModal.show();
+        }
+
+        document.getElementById('menuForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const item = { 
+                Nom: document.getElementById('m-name').value, 
+                Description: document.getElementById('m-desc').value, 
+                Prix: parseFloat(document.getElementById('m-price').value), 
+                Catégorie: document.getElementById('m-cat').value, 
+                Image: document.getElementById('m-img').value 
+            };
+            await fetch(`${API}?action=addMenuItem`, { method: 'POST', body: JSON.stringify({token, item}) });
+            location.reload();
+        };
+
+        async function delItem(id) { 
+            if(confirm('Supprimer ce plat ?')) { 
+                await fetch(`${API}?action=deleteMenuItem`, { method: 'POST', body: JSON.stringify({token, id}) }); 
+                loadMenu(); 
+            } 
+        }
+        
+        async function updOrder(id, status) { 
+            await fetch(`${API}?action=updateOrderStatus`, { method: 'POST', body: JSON.stringify({token, id, status}) }); 
+        }
+    </script>
+</body>
+</html>
