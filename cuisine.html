@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fortune Resto - Écran Cuisine Premium</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --accent: #D4AF37;
+            --bg-dark: #0a0a0a;
+            --card-bg: #161616;
+            --border-color: #2a2a2a;
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+        }
+
+        body { 
+            background: var(--bg-dark); 
+            color: var(--text-main); 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            padding: 25px; 
+        }
+
+        .kds-header {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .kds-title { 
+            color: var(--accent); 
+            font-weight: 800; 
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .kds-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .order-card { 
+            background: var(--card-bg); 
+            border: 1px solid var(--border-color); 
+            border-radius: 16px; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        
+        .order-card:hover {
+            border-color: var(--accent);
+        }
+
+        .order-header { 
+            background: rgba(255, 255, 255, 0.03); 
+            padding: 16px; 
+            font-weight: 700; 
+            font-size: 1.2rem; 
+            border-bottom: 1px solid var(--border-color); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+
+        .order-id { color: var(--accent); }
+
+        .order-body { padding: 20px; flex-grow: 1; }
+
+        .client-name {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .article-list { list-style: none; padding: 0; margin: 0; }
+
+        .article-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px dashed rgba(255,255,255,0.05);
+            font-size: 1.3rem;
+        }
+
+        .article-item:last-child { border-bottom: none; }
+
+        .article-qty {
+            background: rgba(212, 175, 55, 0.15);
+            color: var(--accent);
+            font-weight: 800;
+            padding: 4px 12px;
+            border-radius: 8px;
+            margin-right: 15px;
+            min-width: 45px;
+            text-align: center;
+            font-size: 1.4rem;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .article-name { font-weight: 600; color: var(--text-main); }
+
+        .order-footer { 
+            padding: 15px; 
+            background: rgba(0, 0, 0, 0.2); 
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn-ready { 
+            background: var(--accent); 
+            color: #000; 
+            font-weight: 700; 
+            width: 100%; 
+            font-size: 1.15rem; 
+            padding: 12px; 
+            border: none; 
+            border-radius: 12px; 
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-ready:hover { 
+            background: #ffffff; 
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255,255,255,0.1);
+        }
+
+        .refresh-indicator { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; }
+    </style>
+</head>
+<body>
+
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center kds-header">
+            <div>
+                <h1 class="kds-title m-0"><i class="fas fa-fire me-2"></i>Cuisine</h1>
+                <p class="text-muted m-0 p-0 mt-1" style="font-size: 0.9rem;">Flux de préparation en temps réel</p>
+            </div>
+            <div class="text-end d-flex align-items-center gap-3">
+                <span class="refresh-indicator" id="refreshTimer"><i class="fas fa-sync fa-spin me-1"></i> Synchronisation...</span>
+                <button class="btn btn-sm btn-outline-light px-3 py-2 rounded-3" onclick="loadKDSOrders()">Actualiser</button>
+            </div>
+        </div>
+
+        <div class="kds-grid" id="kdsContainer">
+            <div class="text-center my-5 w-100">
+                <p class="text-muted">Chargement des commandes en cours...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = "https://script.google.com/macros/s/AKfycbz2ea0gkxOOcCRkhrjlThdRlkQtmek2h3jvoqVeVuRVfS7WJu5nV8VUFqxYqSwqrM3Q/exec";
+        let token = localStorage.getItem('token'); 
+        let countdown = 20;
+        
+        // Variable pour suivre l'historique du nombre de commandes
+        let lastOrdersCount = -1; 
+
+        if(!token) {
+            alert("Veuillez d'abord vous connecter sur la page admin.");
+            window.location.href = "admin.html";
+        } else {
+            loadKDSOrders();
+            setInterval(handleTimer, 1000);
+        }
+
+        function handleTimer() {
+            countdown--;
+            document.getElementById('refreshTimer').innerHTML = `<i class="fas fa-clock me-1"></i>Mise à jour dans <b>${countdown}s</b>`;
+            if(countdown <= 0) {
+                loadKDSOrders();
+                countdown = 20;
+            }
+        }
+
+        // FONCTION DE GÉNÉRATION DU SON (Pas besoin de fichier audio externe)
+        function playNotificationSound() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+                
+                // Premier bip (aigu court)
+                let osc1 = ctx.createOscillator();
+                let gain1 = ctx.createGain();
+                osc1.type = 'sine';
+                osc1.frequency.setValueAtTime(880, ctx.currentTime); // Note La5
+                gain1.gain.setValueAtTime(0.2, ctx.currentTime);
+                gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+                osc1.connect(gain1);
+                gain1.connect(ctx.destination);
+                osc1.start();
+                osc1.stop(ctx.currentTime + 0.15);
+
+                // Second bip en décalé (un chouia plus aigu pour l'harmonie)
+                setTimeout(() => {
+                    let osc2 = ctx.createOscillator();
+                    let gain2 = ctx.createGain();
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(1200, ctx.currentTime);
+                    gain2.gain.setValueAtTime(0.2, ctx.currentTime);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                    osc2.connect(gain2);
+                    gain2.connect(ctx.destination);
+                    osc2.start();
+                    osc2.stop(ctx.currentTime + 0.2);
+                }, 120);
+
+            } catch (e) {
+                console.log("Le navigateur bloque l'audio sans interaction préalable :", e);
+            }
+        }
+
+        async function loadKDSOrders() {
+            try {
+                const res = await fetch(`${API}?action=getOrders&token=${token}`);
+                const data = await res.json();
+                
+                if (!data || !Array.isArray(data)) return;
+
+                const kitchenOrders = data.filter(o => o.Statut === 'En attente');
+                const currentCount = kitchenOrders.length;
+
+                // LOGIQUE SONORE : Déclenchement si de nouvelles commandes s'ajoutent
+                if (lastOrdersCount !== -1 && currentCount > lastOrdersCount) {
+                    playNotificationSound();
+                }
+                // Mise à jour de la mémoire du compteur
+                lastOrdersCount = currentCount;
+
+                if(currentCount === 0) {
+                    document.getElementById('kdsContainer').style.display = 'block';
+                    document.getElementById('kdsContainer').innerHTML = `
+                        <div class="text-center my-5 py-5">
+                            <span style="font-size: 4rem;">🎉</span>
+                            <h3 class="text-muted mt-3">Aucun plat en attente. Tout est propre !</h3>
+                        </div>`;
+                    return;
+                }
+
+                document.getElementById('kdsContainer').style.display = 'grid';
+
+                document.getElementById('kdsContainer').innerHTML = kitchenOrders.map(o => {
+                    const orderId = o['ID Commande'] || o.ID;
+                    const fallbackTotal = parseFloat(o.Total || 0);
+                    const articles = parseArticles(o.Articles, fallbackTotal);
+
+                    return `
+                        <div class="order-card">
+                            <div class="order-header">
+                                <span class="order-id">CMD #${orderId}</span>
+                                <span class="badge bg-danger px-2.5 py-1.5 rounded-3 text-uppercase" style="font-size:0.75rem; font-weight:700; letter-spacing:0.5px;">À faire</span>
+                            </div>
+                            <div class="order-body">
+                                <div class="client-name"><i class="far fa-user me-1"></i> Client : ${o['Nom Client'] || o.NomClient}</div>
+                                <ul class="article-list">
+                                    ${articles.map(a => `
+                                        <li class="article-item">
+                                            <span class="article-qty">x${a.qty}</span>
+                                            <span class="article-name">${a.name}</span>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                            <div class="order-footer">
+                                <button class="btn-ready" onclick="markAsReady('${orderId}')"><i class="fas fa-check me-2"></i>Marquer Prêt</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (e) {
+                console.error("Erreur KDS", e);
+            }
+        }
+
+        async function markAsReady(id) {
+            // Décrémenter artificiellement pour éviter que le rechargement immédiat rejoue le son
+            if (lastOrdersCount > 0) lastOrdersCount--; 
+            
+            await fetch(`${API}?action=updateOrderStatus`, {
+                method: 'POST',
+                body: JSON.stringify({token, id, status: 'Prêt'})
+            });
+            loadKDSOrders();
+            countdown = 20;
+        }
+
+        function parseArticles(articlesData, fallbackTotal) {
+            let list = articlesData;
+            if (typeof list === "string") {
+                try { list = JSON.parse(list); } catch(e) { list = null; }
+            }
+            if (!list && typeof articlesData === "string" && articlesData.trim() !== "") {
+                list = [articlesData];
+            }
+            if (!list) return [];
+            if (!Array.isArray(list)) list = [list];
+
+            let processedList = list.map(a => {
+                if (typeof a === 'string') {
+                    let rawText = a.trim();
+                    let price = 0;
+                    let qty = 1;
+
+                    const explicitQtyMatch = rawText.match(/x\s*(\d+)\s*$/i);
+                    if (explicitQtyMatch) {
+                        qty = parseInt(explicitQtyMatch[1], 10);
+                        rawText = rawText.replace(/x\s*(\d+)\s*$/i, '').trim();
+                    }
+
+                    const priceMatch = rawText.match(/\(([^)]+)\)/);
+                    if (priceMatch) {
+                        const potentialPrice = parseFloat(priceMatch[1].replace(/[^0-9]/g, ''));
+                        if (!isNaN(potentialPrice) && potentialPrice > 0) {
+                            price = potentialPrice;
+                            rawText = rawText.replace(/\([^)]+\)/g, '').replace(/\s+/g, ' ').trim();
+                        }
+                    }
+                    return { name: rawText, qty: qty, price: price };
+                }
+                
+                let name = "";
+                let qty = undefined;
+                let price = undefined;
+
+                for (let key in a) {
+                    let k = key.toLowerCase().trim();
+                    if (k === 'name' || k === 'nom' || k === 'designation' || k === 'article' || k === 'title') name = a[key];
+                    if (k === 'quantity' || k === 'quantite' || k === 'qty' || k === 'qte' || k === 'count') qty = parseInt(a[key], 10);
+                    if (k === 'price' || k === 'prix' || k === 'montant' || k === 'rate') price = parseFloat(a[key]);
+                }
+
+                if (name && (!price || price === 0)) {
+                    const internalMatch = name.match(/\(([^)]+)\)/);
+                    if (internalMatch) {
+                        const p = parseFloat(internalMatch[1].replace(/[^0-9]/g, ''));
+                        if (!isNaN(p) && p > 0) {
+                            price = p;
+                            name = name.replace(/\([^)]+\)/g, '').trim();
+                        }
+                    }
+                }
+
+                return {
+                    name: (name || "Article").replace(/\([^)]+\)/g, '').trim(),
+                    qty: qty && !isNaN(qty) ? qty : 1,
+                    price: price && !isNaN(price) ? price : 0
+                };
+            });
+
+            if (processedList.length === 1) {
+                let item = processedList[0];
+                if (item.price > 0 && fallbackTotal >= item.price) {
+                    let calculatedQty = Math.round(fallbackTotal / item.price);
+                    if (calculatedQty >= 1) item.qty = calculatedQty;
+                }
+            }
+            return processedList;
+        }
+    </script>
+</body>
+</html>
