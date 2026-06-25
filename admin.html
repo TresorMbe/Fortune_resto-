@@ -4,24 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fortune Resto - Admin</title>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
     <style>
         :root { --primary: #D4AF37; --dark: #1a1a1a; --sidebar-width: 250px; }
         body { background: #f8f9fa; font-family: sans-serif; }
         
-        /* Sidebar desktop */
         .sidebar { width: var(--sidebar-width); background: var(--dark); color: white; height: 100vh; position: fixed; padding-top: 20px; z-index: 1030; transition: 0.3s; }
         .sidebar a { color: #ccc; padding: 15px 25px; display: block; text-decoration: none; transition: 0.3s; }
         .sidebar a:hover, .sidebar a.active { background: rgba(212,175,55,0.1); color: var(--primary); border-left: 4px solid var(--primary); }
         
-        /* Contenu Principal */
         .main { margin-left: var(--sidebar-width); padding: 40px; transition: 0.3s; }
         .stat-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-bottom: 4px solid var(--primary); height: 100%; }
         .section { display: none; } .section.active { display: block; }
         .login-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--dark); z-index: 2000; display: flex; align-items: center; justify-content: center; }
         
-        /* Topbar Mobile */
         .mobile-header { display: none; background: var(--dark); color: white; padding: 10px 20px; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1020; }
 
         @media (max-width: 991.98px) {
@@ -130,8 +130,7 @@
                     <p><strong>ID Commande :</strong> <code id="detID"></code></p>
                     <hr>
                     <h6 class="fw-bold">Contenu du panier :</h6>
-                    <div id="detArticles" class="bg-light p-3 rounded border" style="max-height: 200px; overflow-y: auto;">
-                        </div>
+                    <div id="detArticles" class="bg-light p-3 rounded border" style="max-height: 200px; overflow-y: auto;"></div>
                     <hr>
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="fw-bold m-0">Total :</h5>
@@ -145,7 +144,6 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const API = "https://script.google.com/macros/s/AKfycbz2ea0gkxOOcCRkhrjlThdRlkQtmek2h3jvoqVeVuRVfS7WJu5nV8VUFqxYqSwqrM3Q/exec";
         let token = localStorage.getItem('token');
@@ -199,35 +197,52 @@
 
         async function loadMenu() {
             try {
-                const data = await fetch(`${API}?action=getMenu`).then(r => r.json());
+                const res = await fetch(`${API}?action=getMenu`);
+                const data = await res.json();
+                
+                if (!data || !Array.isArray(data)) {
+                    document.getElementById('menuTable').innerHTML = `<tr><td colspan="5" class="text-center text-danger">Données corrompues</td></tr>`;
+                    return;
+                }
+
                 document.getElementById('menuTable').innerHTML = data.map(i => {
                     const isVisible = i.Disponible === true || i.Disponible === "Oui" || i.Disponible === "true";
                     return `
                         <tr>
                             <td><img src="${i.Image || 'https://via.placeholder.com/50'}" width="50" height="50" class="rounded" style="object-fit:cover;"></td>
-                            <td class="fw-semibold">${i.Nom}</td>
-                            <td>${formatPrice(parseFloat(i.Prix))}</td>
+                            <td class="fw-semibold">${i.Nom || 'Sans nom'}</td>
+                            <td>${formatPrice(parseFloat(i.Prix || 0))}</td>
                             <td><span class="badge ${isVisible ? 'bg-success' : 'bg-danger'}">${isVisible ? 'Oui' : 'Non'}</span></td>
                             <td><button class="btn btn-sm btn-outline-danger" onclick="delItem('${i.ID}')"><i class="fas fa-trash"></i></button></td>
                         </tr>
                     `;
                 }).join('');
-            } catch (e) { console.error("Erreur menu", e); }
+            } catch (e) { 
+                console.error("Erreur menu", e); 
+                document.getElementById('menuTable').innerHTML = `<tr><td colspan="5" class="text-center text-danger">Erreur de chargement</td></tr>`;
+            }
         }
 
         async function loadOrders() {
             try {
-                const data = await fetch(`${API}?action=getOrders&token=${token}`).then(r => r.json());
+                const res = await fetch(`${API}?action=getOrders&token=${token}`);
+                const data = await res.json();
+                
+                if (!data || !Array.isArray(data)) {
+                    document.getElementById('ordersTable').innerHTML = `<tr><td colspan="5" class="text-center text-danger">Aucune commande trouvée</td></tr>`;
+                    return;
+                }
+
                 currentOrders = data;
                 
                 document.getElementById('ordersTable').innerHTML = data.map((o, index) => {
-                    const orderId = o['ID Commande'] || o.ID;
+                    const orderId = o['ID Commande'] || o.ID || 'N/A';
                     const clientName = o['Nom Client'] || o.NomClient || "Inconnu";
                     return `
                         <tr>
                             <td><code>${orderId}</code></td>
                             <td>${clientName}</td>
-                            <td class="fw-bold">${formatPrice(parseFloat(o.Total))}</td>
+                            <td class="fw-bold">${formatPrice(parseFloat(o.Total || 0))}</td>
                             <td>
                                 <select onchange="updOrder('${orderId}', this.value)" class="form-select form-select-sm" style="width:auto;">
                                     <option ${o.Statut == 'En attente' ? 'selected' : ''}>En attente</option>
@@ -235,48 +250,240 @@
                                     <option ${o.Statut == 'Livré' ? 'selected' : ''}>Livré</option>
                                 </select>
                             </td>
-                            <td><button class="btn btn-sm btn-dark" onclick="showOrderDetails(${index})">Détails</button></td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    <button class="btn btn-sm btn-dark" onclick="showOrderDetails(${index})">Détails</button>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="printReceipt(${index})"><i class="fas fa-print"></i></button>
+                                </div>
+                            </td>
                         </tr>
                     `;
                 }).join('');
-            } catch (e) { console.error("Erreur commandes", e); }
+            } catch (e) { 
+                console.error("Erreur commandes", e); 
+                document.getElementById('ordersTable').innerHTML = `<tr><td colspan="5" class="text-center text-danger">Erreur de chargement</td></tr>`;
+            }
+        }
+
+        // Analyseur robuste et cloisonné pour isoler chaque article sans fausser les paniers multi-produits
+        function parseArticles(articlesData, fallbackTotal) {
+            let list = articlesData;
+            if (typeof list === "string") {
+                try { list = JSON.parse(list); } catch(e) { list = null; }
+            }
+            
+            if (!list && typeof articlesData === "string" && articlesData.trim() !== "") {
+                list = [articlesData];
+            }
+
+            if (!list) return [];
+            if (!Array.isArray(list)) list = [list];
+
+            // Étape 1 : Convertir tous les éléments en objets standardisés [{name, qty, price}]
+            let processedList = list.map(a => {
+                if (typeof a === 'string') {
+                    let rawText = a.trim();
+                    let price = 0;
+                    let qty = 1;
+
+                    // Détection prioritaire d'un multiplicateur écrit textuellement en fin de chaîne (ex: "x2", "x 3")
+                    const explicitQtyMatch = rawText.match(/x\s*(\d+)\s*$/i);
+                    if (explicitQtyMatch) {
+                        qty = parseInt(explicitQtyMatch[1], 10);
+                        rawText = rawText.replace(/x\s*(\d+)\s*$/i, '').trim();
+                    }
+
+                    // Extraction du prix unitaire situé entre parenthèses
+                    const priceMatch = rawText.match(/\(([^)]+)\)/);
+                    if (priceMatch) {
+                        const potentialPrice = parseFloat(priceMatch[1].replace(/[^0-9]/g, ''));
+                        if (!isNaN(potentialPrice) && potentialPrice > 0) {
+                            price = potentialPrice;
+                            rawText = rawText.replace(/\([^)]+\)/, '').trim();
+                        }
+                    }
+
+                    return { name: rawText, qty: qty, price: price };
+                }
+                
+                // Si la structure reçue est déjà un objet JSON structuré
+                let name = "";
+                let qty = undefined;
+                let price = undefined;
+
+                for (let key in a) {
+                    let k = key.toLowerCase().trim();
+                    if (k === 'name' || k === 'nom' || k === 'designation' || k === 'article' || k === 'title') name = a[key];
+                    if (k === 'quantity' || k === 'quantite' || k === 'qty' || k === 'qte' || k === 'count') qty = parseInt(a[key], 10);
+                    if (k === 'price' || k === 'prix' || k === 'montant' || k === 'rate') price = parseFloat(a[key]);
+                }
+
+                if (name && (!price || price === 0)) {
+                    const internalMatch = name.match(/\(([^)]+)\)/);
+                    if (internalMatch) {
+                        const p = parseFloat(internalMatch[1].replace(/[^0-9]/g, ''));
+                        if (!isNaN(p) && p > 0) {
+                            price = p;
+                            name = name.replace(/\([^)]+\)/, '').trim();
+                        }
+                    }
+                }
+
+                return {
+                    name: name || "Article",
+                    qty: qty && !isNaN(qty) ? qty : 1,
+                    price: price && !isNaN(price) ? price : 0
+                };
+            });
+
+            // Étape 2 : Recalculer intelligemment la quantité SEULEMENT s'il n'y a qu'un unique article dans le panier
+            if (processedList.length === 1) {
+                let item = processedList[0];
+                if (item.price > 0 && fallbackTotal > item.price) {
+                    let calculatedQty = Math.round(fallbackTotal / item.price);
+                    if (calculatedQty > 1) item.qty = calculatedQty;
+                }
+            }
+
+            return processedList;
         }
 
         function showOrderDetails(index) {
             const o = currentOrders[index];
             if (!o) return;
 
+            const totalAmount = parseFloat(o.Total || 0);
             document.getElementById('detClient').innerText = o['Nom Client'] || o.NomClient || "Inconnu";
             document.getElementById('detID').innerText = o['ID Commande'] || o.ID;
-            document.getElementById('detTotal').innerText = formatPrice(parseFloat(o.Total));
+            document.getElementById('detTotal').innerText = formatPrice(totalAmount);
 
+            const processedArticles = parseArticles(o.Articles, totalAmount);
             let articlesHTML = "";
-            let articlesList = o.Articles;
 
-            if (typeof articlesList === "string") {
-                try { articlesList = JSON.parse(articlesList); } catch(e) { articlesList = null; }
-            }
-
-            if (Array.isArray(articlesList) && articlesList.length > 0) {
+            if (processedArticles.length > 0) {
                 articlesHTML = '<ul class="list-unstyled mb-0">';
-                articlesList.forEach(a => {
-                    const name = a.name || a.Nom || a.designation || "Article sans nom";
-                    const qty = a.qty || a.quantite || a.quantity || 1;
-                    articlesHTML += `<li class="mb-2"><strong>${name}</strong> x${qty}</li>`;
+                processedArticles.forEach(a => {
+                    const priceDisplay = a.price > 0 ? ` (${formatPrice(a.price)})` : '';
+                    articlesHTML += `<li class="mb-2"><strong>${a.name}</strong>${priceDisplay} <strong>x${a.qty}</strong></li>`;
                 });
                 articlesHTML += '</ul>';
-            } else if (o.Articles && typeof o.Articles === "string") {
-                articlesHTML = `<div>${o.Articles}</div>`;
             } else {
-                articlesHTML = '<div class="text-muted style="font-style: italic;">Aucun détail d\'article trouvé.</div>';
+                articlesHTML = '<div class="text-muted" style="font-style: italic;">Aucun détail trouvé.</div>';
             }
 
             document.getElementById('detArticles').innerHTML = articlesHTML;
 
-            // CORRECTION ICI : 'bootstrap' avec un b minuscule pour correspondre au script Bootstrap 5
             const modalElement = document.getElementById('orderDetailsModal');
-            const detailModal = bootstrap.Modal.getOrCreateInstance(modalElement);
-            detailModal.show();
+            if (window.bootstrap && window.bootstrap.Modal) {
+                window.bootstrap.Modal.getOrCreateInstance(modalElement).show();
+            } else {
+                modalElement.classList.add('show');
+                modalElement.style.display = 'block';
+                modalElement.style.background = 'rgba(0,0,0,0.5)';
+                const closeHandler = () => {
+                    modalElement.style.display = 'none';
+                    modalElement.classList.remove('show');
+                };
+                modalElement.querySelectorAll('[data-bs-dismiss="modal"], .btn-dark').forEach(btn => btn.onclick = closeHandler);
+            }
+        }
+
+        function printReceipt(index) {
+            const o = currentOrders[index];
+            if (!o) return;
+
+            const totalAmount = parseFloat(o.Total || 0);
+            const orderId = o['ID Commande'] || o.ID || '0000';
+            const clientName = o['Nom Client'] || o.NomClient || "Inconnu";
+            const clientPhone = o['Téléphone'] || o.Telephone || "N/A";
+            const orderDate = o['Date'] || o.Date || new Date().toLocaleDateString('fr-FR');
+            
+            const processedArticles = parseArticles(o.Articles, totalAmount);
+
+            let itemsHTML = "";
+            if (processedArticles.length > 0) {
+                itemsHTML = processedArticles.map(item => {
+                    let subTotal = item.price * item.qty;
+                    if (subTotal === 0 && processedArticles.length === 1) subTotal = totalAmount;
+                    return `
+                        <tr>
+                            <td style="font-family:monospace; font-size:12px; padding:4px 0;">${item.qty}x ${item.name}</td>
+                            <td style="font-family:monospace; font-size:12px; text-align:right; padding:4px 0;">${subTotal > 0 ? new Intl.NumberFormat('fr-FR').format(subTotal) : ''}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } else {
+                itemsHTML = `<tr><td colspan="2" style="font-size:12px; font-style:italic;">Détails indisponibles</td></tr>`;
+            }
+
+            let iframe = document.getElementById('printIframe');
+            if (!iframe) {
+                iframe = document.createElement('iframe');
+                iframe.id = 'printIframe';
+                iframe.style.position = 'absolute';
+                iframe.style.width = '0px';
+                iframe.style.height = '0px';
+                iframe.style.border = 'none';
+                document.body.appendChild(iframe);
+            }
+
+            const printDoc = iframe.contentWindow.document || iframe.contentDocument;
+            printDoc.open();
+            printDoc.write(`
+                <html>
+                <head>
+                    <title>Ticket #TL-${orderId}</title>
+                    <style>
+                        @page { size: auto; margin: 0mm; }
+                        body { width: 270px; margin: 10px auto; padding: 5px; font-family: monospace; color: #000; background:#fff; }
+                        .text-center { text-align: center; }
+                        .border-dashed { border-bottom: 1px dashed #000; margin: 8px 0; }
+                        table { width: 100%; border-collapse: collapse; }
+                        h3, p { margin: 0; }
+                    </style>
+                </head>
+                <body>
+                    <div class="text-center">
+                        <h3 style="margin-bottom:3px;">FORTUNE RESTO</h3>
+                        <p style="font-size:11px;">Akwa, Douala, Cameroun</p>
+                    </div>
+                    <div class="border-dashed"></div>
+                    <p style="font-size:11px; line-height:1.4;">
+                        <b>CMD :</b> #TL-${orderId}<br>
+                        <b>Date :</b> ${orderDate}<br>
+                        <b>Client :</b> ${clientName}<br>
+                        <b>Tél :</b> ${clientPhone}
+                    </p>
+                    <div class="border-dashed"></div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="text-align:left; font-size:11px;">ARTICLE</th>
+                                <th style="text-align:right; font-size:11px;">TOTAL (CFA)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHTML}
+                        </tbody>
+                    </table>
+                    <div class="border-dashed"></div>
+                    <table style="font-weight:bold; font-size:13px;">
+                        <tr>
+                            <td>TOTAL NET :</td>
+                            <td style="text-align:right;">${new Intl.NumberFormat('fr-FR').format(totalAmount)} FCFA</td>
+                        </tr>
+                    </table>
+                    <div class="border-dashed" style="margin-top:15px;"></div>
+                    <p class="text-center" style="font-size:10px; margin-top:5px;">Fortune Resto - L'Art de la Table<br>Merci de votre confiance !</p>
+                </body>
+                </html>
+            `);
+            printDoc.close();
+
+            setTimeout(() => {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+            }, 500);
         }
 
         document.getElementById('menuForm').onsubmit = async (e) => {
