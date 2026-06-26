@@ -8,6 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         :root { --primary: #D4AF37; --dark: #1a1a1a; --sidebar-width: 250px; }
@@ -23,6 +24,7 @@
         .login-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--dark); z-index: 2000; display: flex; align-items: center; justify-content: center; }
         
         .mobile-header { display: none; background: var(--dark); color: white; padding: 10px 20px; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1020; }
+        .chart-container { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-top: 20px; }
 
         @media (max-width: 991.98px) {
             .sidebar { transform: translateX(-100%); width: var(--sidebar-width); }
@@ -62,16 +64,54 @@
     <div class="main">
         
         <div id="dashboard" class="section active">
-            <h2 class="mb-4 fw-bold">Tableau de Bord</h2>
+            <div class="card p-3 mb-4 border-0 shadow-sm rounded-3 bg-white">
+                <div class="row align-items-center">
+                    <div class="col-12 col-md-6">
+                        <h6 class="text-muted m-0 fw-bold"><i class="fas fa-key text-warning me-2"></i>Code de Validation Tables (Aujourd'hui)</h6>
+                        <small class="text-muted">Les clients doivent saisir ce code pour commander sur place.</small>
+                    </div>
+                    <div class="col-12 col-md-6 mt-2 mt-md-0 d-flex gap-2 justify-content-md-end">
+                        <input type="number" id="inputSessionCode" class="form-control text-center fw-bold text-dark fs-5" style="max-width: 150px; letter-spacing: 2px;">
+                        <button class="btn btn-warning fw-bold text-dark px-3" onclick="saveNewSessionCode()">Mettre à jour</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 gap-3">
+                <h2 class="fw-bold m-0">Tableau de Bord</h2>
+                <div>
+                    <select id="statsFilter" class="form-select" onchange="filterStats(this.value)">
+                        <option value="all">Toutes les données</option>
+                        <option value="day">Aujourd'hui</option>
+                        <option value="week">Cette semaine</option>
+                        <option value="month">Ce mois</option>
+                    </select>
+                </div>
+            </div>
             <div class="row g-3">
                 <div class="col-12 col-sm-6 col-lg-4">
-                    <div class="stat-card"><h6>Ventes Totales</h6><h2 id="s-sales" class="fw-bold text-nowrap">0 FCFA</h2></div>
+                    <div class="stat-card"><h6>Ventes Période</h6><h2 id="s-sales" class="fw-bold text-nowrap">0 FCFA</h2></div>
                 </div>
                 <div class="col-12 col-sm-6 col-lg-4">
-                    <div class="stat-card"><h6>Commandes</h6><h2 id="s-orders" class="fw-bold">0</h2></div>
+                    <div class="stat-card"><h6>Commandes Valides</h6><h2 id="s-orders" class="fw-bold">0</h2></div>
                 </div>
                 <div class="col-12 col-sm-6 col-lg-4">
-                    <div class="stat-card"><h6>Plats</h6><h2 id="s-menu" class="fw-bold">0</h2></div>
+                    <div class="stat-card"><h6>Plats Référencés</h6><h2 id="s-menu" class="fw-bold">0</h2></div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12 col-lg-7">
+                    <div class="chart-container">
+                        <h5 class="fw-bold mb-3">Évolution des ventes (FCFA)</h5>
+                        <canvas id="salesChart" style="max-height: 300px;"></canvas>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-5">
+                    <div class="chart-container">
+                        <h5 class="fw-bold mb-3">Top 5 des plats les plus vendus</h5>
+                        <canvas id="topPlatsChart" style="max-height: 300px;"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -93,7 +133,7 @@
             <h2 class="mb-4 fw-bold">Commandes Récentes</h2>
             <div class="table-responsive bg-white rounded-3 shadow-sm p-3">
                 <table class="table align-middle">
-                    <thead><tr><th>ID</th><th>Client</th><th>Total</th><th>Statut</th><th>Action</th></tr></thead>
+                    <thead><tr><th>ID</th><th>Client</th><th>Type / Table</th><th>Total</th><th>Statut</th><th>Action</th></tr></thead>
                     <tbody id="ordersTable"></tbody>
                 </table>
             </div>
@@ -128,6 +168,9 @@
                 <div class="modal-body">
                     <p><strong>Client :</strong> <span id="detClient"></span></p>
                     <p><strong>ID Commande :</strong> <code id="detID"></code></p>
+                    <p><strong>Type / Mode :</strong> <span id="detType" class="badge bg-secondary"></span></p>
+                    <p><strong>Lieu / Table :</strong> <span id="detEmplacement" class="fw-bold"></span></p>
+                    <p><strong>Téléphone :</strong> <span id="detPhone"></span></p>
                     <hr>
                     <h6 class="fw-bold">Contenu du panier :</h6>
                     <div id="detArticles" class="bg-light p-3 rounded border" style="max-height: 200px; overflow-y: auto;"></div>
@@ -145,11 +188,18 @@
     </div>
 
     <script>
-        const API = "https://script.google.com/macros/s/AKfycbz2ea0gkxOOcCRkhrjlThdRlkQtmek2h3jvoqVeVuRVfS7WJu5nV8VUFqxYqSwqrM3Q/exec";
+        const API = "https://script.google.com/macros/s/AKfycbxJodAZbZI3WzpHYQ0qQiCy2gXQM92GDs_mo5TowHwG6jk0oGBNcd2sRN5pKk7ILAW4/exec";
         let token = localStorage.getItem('token');
         let currentOrders = [];
+        let menuItemsCount = 0;
+        let salesChartInstance = null;
+        let topPlatsChartInstance = null;
 
-        if(token) { document.getElementById('loginOverlay').style.display = 'none'; loadStats(); }
+        if(token) { 
+            document.getElementById('loginOverlay').style.display = 'none'; 
+            initDashboard(); 
+            loadSessionCode();
+        }
 
         const sidebarMenu = document.getElementById('sidebarMenu');
         document.getElementById('menuToggle').onclick = (e) => {
@@ -177,7 +227,7 @@
             l.classList.add('active');
             sidebarMenu.classList.remove('show');
             
-            if(l.dataset.sec === 'dashboard') loadStats();
+            if(l.dataset.sec === 'dashboard') { initDashboard(); loadSessionCode(); }
             if(l.dataset.sec === 'menu') loadMenu();
             if(l.dataset.sec === 'orders') loadOrders();
         });
@@ -186,13 +236,129 @@
             return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
         }
 
-        async function loadStats() {
+        // Récupérer et afficher le code de session
+        async function loadSessionCode() {
             try {
-                const s = await fetch(`${API}?action=getStats&token=${token}`).then(r => r.json());
-                document.getElementById('s-sales').innerText = formatPrice(s.totalSales || 0);
-                document.getElementById('s-orders').innerText = s.totalOrders || 0;
-                document.getElementById('s-menu').innerText = s.menuItemsCount || 0;
-            } catch (e) { console.error("Erreur stats", e); }
+                const res = await fetch(`${API}?action=getSessionCode&token=${token}`).then(r => r.json());
+                if(res.success) {
+                    document.getElementById('inputSessionCode').value = res.code;
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        // Modifier le code de table éphémère
+        async function saveNewSessionCode() {
+            const newCode = document.getElementById('inputSessionCode').value.trim();
+            if(!newCode || newCode.length < 1) return alert("Saisissez un code valide.");
+            try {
+                const res = await fetch(`${API}?action=updateSessionCode&token=${token}`, {
+                    method: 'POST',
+                    body: JSON.stringify({token, code: newCode})
+                }).then(r => r.json());
+                if(res.success) alert("🎉 Code mis à jour avec succès !");
+            } catch(e) { alert("Erreur lors de la modification"); }
+        }
+
+        async function initDashboard() {
+            try {
+                const resMenu = await fetch(`${API}?action=getMenu`).then(r => r.json());
+                menuItemsCount = Array.isArray(resMenu) ? resMenu.length : 0;
+                
+                const resOrders = await fetch(`${API}?action=getOrders&token=${token}`).then(r => r.json());
+                currentOrders = Array.isArray(resOrders) ? resOrders : [];
+                
+                filterStats('all');
+            } catch (e) { console.error("Erreur initialisation dashboard", e); }
+        }
+
+        function filterStats(period) {
+            const now = new Date();
+            let filtered = currentOrders;
+
+            if (period === 'day') {
+                const todayStr = now.toLocaleDateString('fr-FR');
+                filtered = currentOrders.filter(o => o.Date && o.Date.split(' ')[0] === todayStr);
+            } else if (period === 'week') {
+                const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                filtered = currentOrders.filter(o => parseDate(o.Date) >= oneWeekAgo);
+            } else if (period === 'month') {
+                const currentMonth = now.getMonth();
+                const currentYear = now.getFullYear();
+                filtered = currentOrders.filter(o => {
+                    const d = parseDate(o.Date);
+                    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+                });
+            }
+
+            let totalSales = 0;
+            let orderCount = 0;
+            let platQuantities = {};
+            let salesTimeline = {};
+
+            filtered.forEach(o => {
+                const total = parseFloat(o.Total || 0);
+                totalSales += total;
+                orderCount++;
+
+                const dateKey = o.Date ? o.Date.split(' ')[0] : "Inconnue";
+                salesTimeline[dateKey] = (salesTimeline[dateKey] || 0) + total;
+
+                // Support de o.ArticlesRaw ou o.Articles
+                const items = parseArticles(o.ArticlesRaw || o.Articles, total);
+                items.forEach(item => {
+                    platQuantities[item.name] = (platQuantities[item.name] || 0) + item.qty;
+                });
+            });
+
+            document.getElementById('s-sales').innerText = formatPrice(totalSales);
+            document.getElementById('s-orders').innerText = orderCount;
+            document.getElementById('s-menu').innerText = menuItemsCount;
+
+            renderSalesChart(salesTimeline);
+            renderTopPlatsChart(platQuantities);
+        }
+
+        function parseDate(dateStr) {
+            if(!dateStr) return new Date(0);
+            const cleanStr = dateStr.split(' ')[0]; // Élimine l'heure si elle existe
+            const parts = cleanStr.split('/');
+            if(parts.length === 3) return new Date(parts[2], parts[1] - 1, parts[0]);
+            return new Date(dateStr);
+        }
+
+        function renderSalesChart(timelineData) {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            const sortedDates = Object.keys(timelineData).sort((a,b) => parseDate(a) - parseDate(b));
+            const dataset = sortedDates.map(d => timelineData[d]);
+
+            if (salesChartInstance) salesChartInstance.destroy();
+            salesChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: sortedDates,
+                    datasets: [{ label: 'Ventes', data: dataset, borderColor: '#D4AF37', tension: 0.2, fill: false }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        function renderTopPlatsChart(platData) {
+            const ctx = document.getElementById('topPlatsChart').getContext('2d');
+            const sortedPlats = Object.keys(platData).sort((a,b) => platData[b] - platData[a]).slice(0, 5);
+            const dataset = sortedPlats.map(p => platData[p]);
+
+            if (topPlatsChartInstance) topPlatsChartInstance.destroy();
+            topPlatsChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: sortedPlats,
+                    datasets: [{
+                        data: dataset,
+                        backgroundColor: ['#1a1a1a', '#D4AF37', '#4bc0c0', '#9966ff', '#ff9f40']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
         }
 
         async function loadMenu() {
@@ -229,7 +395,7 @@
                 const data = await res.json();
                 
                 if (!data || !Array.isArray(data)) {
-                    document.getElementById('ordersTable').innerHTML = `<tr><td colspan="5" class="text-center text-danger">Aucune commande trouvée</td></tr>`;
+                    document.getElementById('ordersTable').innerHTML = `<tr><td colspan="6" class="text-center text-danger">Aucune commande trouvée</td></tr>`;
                     return;
                 }
 
@@ -238,13 +404,25 @@
                 document.getElementById('ordersTable').innerHTML = data.map((o, index) => {
                     const orderId = o['ID Commande'] || o.ID || 'N/A';
                     const clientName = o['Nom Client'] || o.NomClient || "Inconnu";
+                    const isDelivered = o.Statut === 'Livré';
+                    const orderType = o['Type'] || o.Type || 'Sur place';
+                    const orderLocation = o['Emplacement'] || o.Emplacement || '—';
+                    
+                    let badgeColor = "bg-warning text-dark";
+                    if(orderType === "Livraison") badgeColor = "bg-info text-white";
+                    if(orderType === "À emporter") badgeColor = "bg-secondary text-white";
+
                     return `
                         <tr>
                             <td><code>${orderId}</code></td>
                             <td>${clientName}</td>
+                            <td>
+                                <span class="badge ${badgeColor} me-1" style="font-size:0.75rem;">${orderType}</span>
+                                <strong style="font-size:0.85rem;">${orderLocation}</strong>
+                            </td>
                             <td class="fw-bold">${formatPrice(parseFloat(o.Total || 0))}</td>
                             <td>
-                                <select onchange="updOrder('${orderId}', this.value)" class="form-select form-select-sm" style="width:auto;">
+                                <select onchange="updOrder('${orderId}', this.value)" class="form-select form-select-sm" style="width:auto;" ${isDelivered ? 'disabled' : ''}>
                                     <option ${o.Statut == 'En attente' ? 'selected' : ''}>En attente</option>
                                     <option ${o.Statut == 'Prêt' ? 'selected' : ''}>Prêt</option>
                                     <option ${o.Statut == 'Livré' ? 'selected' : ''}>Livré</option>
@@ -254,6 +432,7 @@
                                 <div class="d-flex gap-1">
                                     <button class="btn btn-sm btn-dark" onclick="showOrderDetails(${index})">Détails</button>
                                     <button class="btn btn-sm btn-outline-secondary" onclick="printReceipt(${index})"><i class="fas fa-print"></i></button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteOrder('${orderId}')"><i class="fas fa-trash"></i></button>
                                 </div>
                             </td>
                         </tr>
@@ -261,52 +440,45 @@
                 }).join('');
             } catch (e) { 
                 console.error("Erreur commandes", e); 
-                document.getElementById('ordersTable').innerHTML = `<tr><td colspan="5" class="text-center text-danger">Erreur de chargement</td></tr>`;
+                document.getElementById('ordersTable').innerHTML = `<tr><td colspan="6" class="text-center text-danger">Erreur de chargement</td></tr>`;
             }
         }
 
-        // Analyseur robuste et cloisonné pour isoler chaque article sans fausser les paniers multi-produits
+        // Utilisation stricte de la logique de l'ancien code avec calcul sur le fallbackTotal
         function parseArticles(articlesData, fallbackTotal) {
             let list = articlesData;
             if (typeof list === "string") {
                 try { list = JSON.parse(list); } catch(e) { list = null; }
             }
-            
             if (!list && typeof articlesData === "string" && articlesData.trim() !== "") {
                 list = [articlesData];
             }
-
             if (!list) return [];
             if (!Array.isArray(list)) list = [list];
 
-            // Étape 1 : Convertir tous les éléments en objets standardisés [{name, qty, price}]
             let processedList = list.map(a => {
                 if (typeof a === 'string') {
                     let rawText = a.trim();
                     let price = 0;
                     let qty = 1;
 
-                    // Détection prioritaire d'un multiplicateur écrit textuellement en fin de chaîne (ex: "x2", "x 3")
                     const explicitQtyMatch = rawText.match(/x\s*(\d+)\s*$/i);
                     if (explicitQtyMatch) {
                         qty = parseInt(explicitQtyMatch[1], 10);
                         rawText = rawText.replace(/x\s*(\d+)\s*$/i, '').trim();
                     }
 
-                    // Extraction du prix unitaire situé entre parenthèses
                     const priceMatch = rawText.match(/\(([^)]+)\)/);
                     if (priceMatch) {
                         const potentialPrice = parseFloat(priceMatch[1].replace(/[^0-9]/g, ''));
                         if (!isNaN(potentialPrice) && potentialPrice > 0) {
                             price = potentialPrice;
-                            rawText = rawText.replace(/\([^)]+\)/, '').trim();
+                            rawText = rawText.replace(/\([^)]+\)/g, '').replace(/\s+/g, ' ').trim();
                         }
                     }
-
                     return { name: rawText, qty: qty, price: price };
                 }
                 
-                // Si la structure reçue est déjà un objet JSON structuré
                 let name = "";
                 let qty = undefined;
                 let price = undefined;
@@ -324,27 +496,26 @@
                         const p = parseFloat(internalMatch[1].replace(/[^0-9]/g, ''));
                         if (!isNaN(p) && p > 0) {
                             price = p;
-                            name = name.replace(/\([^)]+\)/, '').trim();
+                            name = name.replace(/\([^)]+\)/g, '').trim();
                         }
                     }
                 }
 
                 return {
-                    name: name || "Article",
+                    name: (name || "Article").replace(/\([^)]+\)/g, '').trim(),
                     qty: qty && !isNaN(qty) ? qty : 1,
                     price: price && !isNaN(price) ? price : 0
                 };
             });
 
-            // Étape 2 : Recalculer intelligemment la quantité SEULEMENT s'il n'y a qu'un unique article dans le panier
+            // Logique de division magique héritée de l'ancien code
             if (processedList.length === 1) {
                 let item = processedList[0];
-                if (item.price > 0 && fallbackTotal > item.price) {
+                if (item.price > 0 && fallbackTotal >= item.price) {
                     let calculatedQty = Math.round(fallbackTotal / item.price);
-                    if (calculatedQty > 1) item.qty = calculatedQty;
+                    if (calculatedQty >= 1) item.qty = calculatedQty;
                 }
             }
-
             return processedList;
         }
 
@@ -355,9 +526,12 @@
             const totalAmount = parseFloat(o.Total || 0);
             document.getElementById('detClient').innerText = o['Nom Client'] || o.NomClient || "Inconnu";
             document.getElementById('detID').innerText = o['ID Commande'] || o.ID;
+            document.getElementById('detType').innerText = o['Type'] || o.Type || 'Sur place';
+            document.getElementById('detEmplacement').innerText = o['Emplacement'] || o.Emplacement || 'Table non spécifiée';
+            document.getElementById('detPhone').innerText = o['Téléphone'] || o.Telephone || '—';
             document.getElementById('detTotal').innerText = formatPrice(totalAmount);
 
-            const processedArticles = parseArticles(o.Articles, totalAmount);
+            const processedArticles = parseArticles(o.ArticlesRaw || o.Articles, totalAmount);
             let articlesHTML = "";
 
             if (processedArticles.length > 0) {
@@ -374,18 +548,7 @@
             document.getElementById('detArticles').innerHTML = articlesHTML;
 
             const modalElement = document.getElementById('orderDetailsModal');
-            if (window.bootstrap && window.bootstrap.Modal) {
-                window.bootstrap.Modal.getOrCreateInstance(modalElement).show();
-            } else {
-                modalElement.classList.add('show');
-                modalElement.style.display = 'block';
-                modalElement.style.background = 'rgba(0,0,0,0.5)';
-                const closeHandler = () => {
-                    modalElement.style.display = 'none';
-                    modalElement.classList.remove('show');
-                };
-                modalElement.querySelectorAll('[data-bs-dismiss="modal"], .btn-dark').forEach(btn => btn.onclick = closeHandler);
-            }
+            window.bootstrap.Modal.getOrCreateInstance(modalElement).show();
         }
 
         function printReceipt(index) {
@@ -397,8 +560,10 @@
             const clientName = o['Nom Client'] || o.NomClient || "Inconnu";
             const clientPhone = o['Téléphone'] || o.Telephone || "N/A";
             const orderDate = o['Date'] || o.Date || new Date().toLocaleDateString('fr-FR');
+            const orderType = o['Type'] || o.Type || "Sur place";
+            const orderLoc = o['Emplacement'] || o.Emplacement || "Table";
             
-            const processedArticles = parseArticles(o.Articles, totalAmount);
+            const processedArticles = parseArticles(o.ArticlesRaw || o.Articles, totalAmount);
 
             let itemsHTML = "";
             if (processedArticles.length > 0) {
@@ -408,7 +573,7 @@
                     return `
                         <tr>
                             <td style="font-family:monospace; font-size:12px; padding:4px 0;">${item.qty}x ${item.name}</td>
-                            <td style="font-family:monospace; font-size:12px; text-align:right; padding:4px 0;">${subTotal > 0 ? new Intl.NumberFormat('fr-FR').format(subTotal) : ''}</td>
+                            <td style="font-family:monospace; font-size:12px; text-align:right; padding:4px 0;">${subTotal > 0 ? new Intl.NumberFormat('fr-FR').format(subTotal) : '—'}</td>
                         </tr>
                     `;
                 }).join('');
@@ -420,10 +585,7 @@
             if (!iframe) {
                 iframe = document.createElement('iframe');
                 iframe.id = 'printIframe';
-                iframe.style.position = 'absolute';
-                iframe.style.width = '0px';
-                iframe.style.height = '0px';
-                iframe.style.border = 'none';
+                iframe.style.position = 'absolute'; iframe.style.width = '0px'; iframe.style.height = '0px'; iframe.style.border = 'none';
                 document.body.appendChild(iframe);
             }
 
@@ -450,7 +612,8 @@
                     <div class="border-dashed"></div>
                     <p style="font-size:11px; line-height:1.4;">
                         <b>CMD :</b> #TL-${orderId}<br>
-                        <b>Date :</b> ${orderDate}<br>
+                        <b>Retrait :</b> ${orderType}<br>
+                        <b>Lieu/Table :</b> ${orderLoc}<br>
                         <b>Client :</b> ${clientName}<br>
                         <b>Tél :</b> ${clientPhone}
                     </p>
@@ -480,10 +643,20 @@
             `);
             printDoc.close();
 
-            setTimeout(() => {
-                iframe.contentWindow.focus();
-                iframe.contentWindow.print();
-            }, 500);
+            setTimeout(() => { iframe.contentWindow.focus(); iframe.contentWindow.print(); }, 500);
+        }
+
+        async function updOrder(id, status) { 
+            await fetch(`${API}?action=updateOrderStatus`, { method: 'POST', body: JSON.stringify({token, id, status}) }); 
+            if(status === 'Livré') loadOrders();
+        }
+
+        async function deleteOrder(id) {
+            if(confirm("Êtes-vous sûr de vouloir supprimer définitivement cette commande ?")) {
+                await fetch(`${API}?action=deleteOrder`, { method: 'POST', body: JSON.stringify({token, id}) });
+                initDashboard();
+                if(document.getElementById('orders').classList.contains('active')) loadOrders();
+            }
         }
 
         document.getElementById('menuForm').onsubmit = async (e) => {
@@ -504,10 +677,6 @@
                 await fetch(`${API}?action=deleteMenuItem`, { method: 'POST', body: JSON.stringify({token, id}) }); 
                 loadMenu(); 
             } 
-        }
-        
-        async function updOrder(id, status) { 
-            await fetch(`${API}?action=updateOrderStatus`, { method: 'POST', body: JSON.stringify({token, id, status}) }); 
         }
     </script>
 </body>
