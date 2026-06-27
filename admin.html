@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -236,7 +237,6 @@
             return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
         }
 
-        // Récupérer et afficher le code de session
         async function loadSessionCode() {
             try {
                 const res = await fetch(`${API}?action=getSessionCode&token=${token}`).then(r => r.json());
@@ -246,7 +246,6 @@
             } catch(e) { console.error(e); }
         }
 
-        // Modifier le code de table éphémère
         async function saveNewSessionCode() {
             const newCode = document.getElementById('inputSessionCode').value.trim();
             if(!newCode || newCode.length < 1) return alert("Saisissez un code valide.");
@@ -303,7 +302,6 @@
                 const dateKey = o.Date ? o.Date.split(' ')[0] : "Inconnue";
                 salesTimeline[dateKey] = (salesTimeline[dateKey] || 0) + total;
 
-                // Support de o.ArticlesRaw ou o.Articles
                 const items = parseArticles(o.ArticlesRaw || o.Articles, total);
                 items.forEach(item => {
                     platQuantities[item.name] = (platQuantities[item.name] || 0) + item.qty;
@@ -320,7 +318,7 @@
 
         function parseDate(dateStr) {
             if(!dateStr) return new Date(0);
-            const cleanStr = dateStr.split(' ')[0]; // Élimine l'heure si elle existe
+            const cleanStr = dateStr.split(' ')[0];
             const parts = cleanStr.split('/');
             if(parts.length === 3) return new Date(parts[2], parts[1] - 1, parts[0]);
             return new Date(dateStr);
@@ -405,12 +403,13 @@
                     const orderId = o['ID Commande'] || o.ID || 'N/A';
                     const clientName = o['Nom Client'] || o.NomClient || "Inconnu";
                     const isDelivered = o.Statut === 'Livré';
+                    
                     const orderType = o['Type'] || o.Type || 'Sur place';
                     const orderLocation = o['Emplacement'] || o.Emplacement || '—';
                     
                     let badgeColor = "bg-warning text-dark";
                     if(orderType === "Livraison") badgeColor = "bg-info text-white";
-                    if(orderType === "À emporter") badgeColor = "bg-secondary text-white";
+                    if(orderType === "A emporter" || orderType === "À emporter") badgeColor = "bg-secondary text-white";
 
                     return `
                         <tr>
@@ -444,23 +443,57 @@
             }
         }
 
-        // Utilisation stricte de la logique de l'ancien code avec calcul sur le fallbackTotal
         function parseArticles(articlesData, fallbackTotal) {
+            if (!articlesData) return [];
             let list = articlesData;
+            
             if (typeof list === "string") {
-                try { list = JSON.parse(list); } catch(e) { list = null; }
+                list = list.trim();
+                if (list.startsWith("[") && list.endsWith("]")) {
+                    try { list = JSON.parse(list); } catch(e) { list = null; }
+                }
             }
-            if (!list && typeof articlesData === "string" && articlesData.trim() !== "") {
-                list = [articlesData];
+
+            if (typeof articlesData === "string" && (!list || typeof list === "string")) {
+                let segments = articlesData.split(",").map(s => s.trim()).filter(s => s !== "");
+                return segments.map(seg => {
+                    let rawText = seg;
+                    let qty = 1;
+                    let unitPrice = 0;
+
+                    const priceMatch = rawText.match(/\((\d+)\s*(?:FCFA)?\)/i);
+                    if (priceMatch) {
+                        unitPrice = parseFloat(priceMatch[1]);
+                    }
+
+                    const explicitQtyMatch = rawText.match(/x\s*(\d+)\s*$/i);
+                    if (explicitQtyMatch) {
+                        qty = parseInt(explicitQtyMatch[1], 10);
+                        rawText = rawText.replace(/x\s*(\d+)\s*$/i, '').trim();
+                    } else if (unitPrice > 0 && fallbackTotal > 0 && segments.length === 1) {
+                        qty = Math.round(fallbackTotal / unitPrice);
+                    }
+
+                    let cleanName = rawText.replace(/\([^)]+\)/g, '').trim();
+                    return { 
+                        name: cleanName || "Article", 
+                        qty: qty > 0 ? qty : 1, 
+                        price: unitPrice > 0 ? unitPrice : (fallbackTotal / qty) 
+                    };
+                });
             }
+
             if (!list) return [];
             if (!Array.isArray(list)) list = [list];
 
-            let processedList = list.map(a => {
+            return list.map(a => {
                 if (typeof a === 'string') {
                     let rawText = a.trim();
-                    let price = 0;
                     let qty = 1;
+                    let unitPrice = 0;
+
+                    const priceMatch = rawText.match(/\((\d+)\s*(?:FCFA)?\)/i);
+                    if (priceMatch) unitPrice = parseFloat(priceMatch[1]);
 
                     const explicitQtyMatch = rawText.match(/x\s*(\d+)\s*$/i);
                     if (explicitQtyMatch) {
@@ -468,55 +501,30 @@
                         rawText = rawText.replace(/x\s*(\d+)\s*$/i, '').trim();
                     }
 
-                    const priceMatch = rawText.match(/\(([^)]+)\)/);
-                    if (priceMatch) {
-                        const potentialPrice = parseFloat(priceMatch[1].replace(/[^0-9]/g, ''));
-                        if (!isNaN(potentialPrice) && potentialPrice > 0) {
-                            price = potentialPrice;
-                            rawText = rawText.replace(/\([^)]+\)/g, '').replace(/\s+/g, ' ').trim();
-                        }
-                    }
-                    return { name: rawText, qty: qty, price: price };
+                    return { 
+                        name: rawText.replace(/\([^)]+\)/g, '').trim(), 
+                        qty: qty, 
+                        price: unitPrice 
+                    };
                 }
                 
                 let name = "";
                 let qty = undefined;
-                let price = undefined;
+                let price = 0;
 
                 for (let key in a) {
                     let k = key.toLowerCase().trim();
-                    if (k === 'name' || k === 'nom' || k === 'designation' || k === 'article' || k === 'title') name = a[key];
-                    if (k === 'quantity' || k === 'quantite' || k === 'qty' || k === 'qte' || k === 'count') qty = parseInt(a[key], 10);
-                    if (k === 'price' || k === 'prix' || k === 'montant' || k === 'rate') price = parseFloat(a[key]);
-                }
-
-                if (name && (!price || price === 0)) {
-                    const internalMatch = name.match(/\(([^)]+)\)/);
-                    if (internalMatch) {
-                        const p = parseFloat(internalMatch[1].replace(/[^0-9]/g, ''));
-                        if (!isNaN(p) && p > 0) {
-                            price = p;
-                            name = name.replace(/\([^)]+\)/g, '').trim();
-                        }
-                    }
+                    if (k === 'name' || k === 'nom' || k === 'designation' || k === 'article') name = a[key];
+                    if (k === 'quantity' || k === 'quantite' || k === 'qty' || k === 'qte') qty = parseInt(a[key], 10);
+                    if (k === 'price' || k === 'prix') price = parseFloat(a[key]);
                 }
 
                 return {
                     name: (name || "Article").replace(/\([^)]+\)/g, '').trim(),
                     qty: qty && !isNaN(qty) ? qty : 1,
-                    price: price && !isNaN(price) ? price : 0
+                    price: price || 0
                 };
             });
-
-            // Logique de division magique héritée de l'ancien code
-            if (processedList.length === 1) {
-                let item = processedList[0];
-                if (item.price > 0 && fallbackTotal >= item.price) {
-                    let calculatedQty = Math.round(fallbackTotal / item.price);
-                    if (calculatedQty >= 1) item.qty = calculatedQty;
-                }
-            }
-            return processedList;
         }
 
         function showOrderDetails(index) {
@@ -524,8 +532,9 @@
             if (!o) return;
 
             const totalAmount = parseFloat(o.Total || 0);
+            
             document.getElementById('detClient').innerText = o['Nom Client'] || o.NomClient || "Inconnu";
-            document.getElementById('detID').innerText = o['ID Commande'] || o.ID;
+            document.getElementById('detID').innerText = o['ID Commande'] || o.ID || '—';
             document.getElementById('detType').innerText = o['Type'] || o.Type || 'Sur place';
             document.getElementById('detEmplacement').innerText = o['Emplacement'] || o.Emplacement || 'Table non spécifiée';
             document.getElementById('detPhone').innerText = o['Téléphone'] || o.Telephone || '—';
@@ -535,10 +544,22 @@
             let articlesHTML = "";
 
             if (processedArticles.length > 0) {
-                articlesHTML = '<ul class="list-unstyled mb-0">';
+                articlesHTML = '<ul class="list-group list-group-flush">';
                 processedArticles.forEach(a => {
-                    const priceDisplay = a.price > 0 ? ` (${formatPrice(a.price)})` : '';
-                    articlesHTML += `<li class="mb-2"><strong>${a.name}</strong>${priceDisplay} <strong>x${a.qty}</strong></li>`;
+                    const priceDetail = a.price > 0 ? `<small class="text-muted d-block">${formatPrice(a.price)} / u</small>` : '';
+                    const lineTotal = a.price > 0 ? formatPrice(a.price * a.qty) : '—';
+
+                    articlesHTML += `
+                        <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent px-0 py-2">
+                            <div>
+                                <span class="fw-semibold text-dark">${a.name}</span>
+                                ${priceDetail}
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-dark rounded-pill fs-6 me-2">x${a.qty}</span>
+                                <span class="fw-bold text-secondary small">${lineTotal}</span>
+                            </div>
+                        </li>`;
                 });
                 articlesHTML += '</ul>';
             } else {
@@ -559,7 +580,6 @@
             const orderId = o['ID Commande'] || o.ID || '0000';
             const clientName = o['Nom Client'] || o.NomClient || "Inconnu";
             const clientPhone = o['Téléphone'] || o.Telephone || "N/A";
-            const orderDate = o['Date'] || o.Date || new Date().toLocaleDateString('fr-FR');
             const orderType = o['Type'] || o.Type || "Sur place";
             const orderLoc = o['Emplacement'] || o.Emplacement || "Table";
             
@@ -567,16 +587,12 @@
 
             let itemsHTML = "";
             if (processedArticles.length > 0) {
-                itemsHTML = processedArticles.map(item => {
-                    let subTotal = item.price * item.qty;
-                    if (subTotal === 0 && processedArticles.length === 1) subTotal = totalAmount;
-                    return `
-                        <tr>
-                            <td style="font-family:monospace; font-size:12px; padding:4px 0;">${item.qty}x ${item.name}</td>
-                            <td style="font-family:monospace; font-size:12px; text-align:right; padding:4px 0;">${subTotal > 0 ? new Intl.NumberFormat('fr-FR').format(subTotal) : '—'}</td>
-                        </tr>
-                    `;
-                }).join('');
+                itemsHTML = processedArticles.map(item => `
+                    <tr>
+                        <td style="font-family:monospace; font-size:12px; padding:4px 0;">${item.qty}x ${item.name}</td>
+                        <td style="font-family:monospace; font-size:12px; text-align:right; padding:4px 0;">—</td>
+                    </tr>
+                `).join('');
             } else {
                 itemsHTML = `<tr><td colspan="2" style="font-size:12px; font-style:italic;">Détails indisponibles</td></tr>`;
             }
@@ -622,7 +638,7 @@
                         <thead>
                             <tr>
                                 <th style="text-align:left; font-size:11px;">ARTICLE</th>
-                                <th style="text-align:right; font-size:11px;">TOTAL (CFA)</th>
+                                <th style="text-align:right; font-size:11px;">TOTAL</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -647,13 +663,32 @@
         }
 
         async function updOrder(id, status) { 
-            await fetch(`${API}?action=updateOrderStatus`, { method: 'POST', body: JSON.stringify({token, id, status}) }); 
+            await fetch(`${API}?action=updateOrderStatus`, { 
+                method: 'POST', 
+                body: JSON.stringify({token, id, status}) 
+            }); 
             if(status === 'Livré') loadOrders();
         }
 
         async function deleteOrder(id) {
-            if(confirm("Êtes-vous sûr de vouloir supprimer définitivement cette commande ?")) {
-                await fetch(`${API}?action=deleteOrder`, { method: 'POST', body: JSON.stringify({token, id}) });
+            if(!confirm("Êtes-vous sûr de vouloir supprimer définitivement cette commande ?")) return;
+            
+            try {
+                const response = await fetch(`${API}?action=deleteOrder`, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ token: token, id: id }) 
+                }).then(r => r.json());
+                
+                if(response.success || response.status === "success") {
+                    initDashboard();
+                    if(document.getElementById('orders').classList.contains('active')) {
+                        loadOrders();
+                    }
+                } else {
+                    initDashboard();
+                    if(document.getElementById('orders').classList.contains('active')) loadOrders();
+                }
+            } catch(e) {
                 initDashboard();
                 if(document.getElementById('orders').classList.contains('active')) loadOrders();
             }
