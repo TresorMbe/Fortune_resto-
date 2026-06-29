@@ -3,8 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fortune Resto | Gastronomie & Excellence au Cameroun</title>
     
+    <!-- SEO Standard -->
+    <title>Fortune Resto | Gastronomie & Excellence au Cameroun</title>
+    <meta name="description" content="Découvrez Fortune Resto à Douala, Akwa. Une symphonie de saveurs et une élégance intemporelle. Commandez en ligne sur place, à emporter ou en livraison.">
+    <meta name="keywords" content="Fortune Resto, Restaurant Douala, Akwa, Gastronomie Cameroun, Commander en ligne, Menu Fortune Resto">
+    <meta name="author" content="Trésor Mbe">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph / Meta Partage (Facebook, WhatsApp, LinkedIn, Telegram) -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://fortuneresto.com/"> <!-- Remplace par ton vrai domaine si nécessaire -->
+    <meta property="og:title" content="Fortune Resto | Gastronomie & Excellence au Cameroun">
+    <meta property="og:description" content="Une symphonie de saveurs, une élégance intemporelle. Découvrez notre carte et commandez directement depuis votre table ou chez vous.">
+    <meta property="og:image" content="https://i.postimg.cc/Y236Kcx4/0bb98b3c-fb63-4407-9dd1-bdce44d723c8.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Fortune Resto | Gastronomie & Excellence au Cameroun">
+    <meta name="twitter:description" content="Une symphonie de saveurs, une élégance intemporelle. Découvrez notre carte et commandez directement.">
+    <meta name="twitter:image" content="https://i.postimg.cc/Y236Kcx4/0bb98b3c-fb63-4407-9dd1-bdce44d723c8.jpg">
+
+    <!-- Favicon (Icône du site / Onglet) -->
+    <link rel="icon" type="image/png" href="https://i.postimg.cc/BbQttD8w/7469A604-11E0-42C3-9731-BC34039CEEB0.png">
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/BbQttD8w/7469A604-11E0-42C3-9731-BC34039CEEB0.png">
+    
+    <!-- CSS Dependencies -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght=700;900&family=Poppins:wght=300;400;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -226,7 +252,6 @@
 
         let cart = [];
         
-        // Lire le numéro de table depuis l'URL (?table=3)
         const urlParams = new URLSearchParams(window.location.search);
         const numeroTable = urlParams.get('table');
 
@@ -240,19 +265,26 @@
             return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
         }
 
-        // Construire dynamiquement les champs du formulaire selon la présence de la table
+        // Configuration dynamique des champs du panier
         function initFormFields() {
             const container = document.getElementById('dynamicFormFields');
             if (numeroTable) {
-                // Formulaire simplifié pour le client assis au restaurant
+                // Le client a scanné un QR code de table : choix exclusif entre Sur place ou À emporter
                 container.innerHTML = `
                     <div class="p-3 mb-3 bg-light border text-center">
                         <span class="fw-bold text-success"><i class="fas fa-chair me-2"></i> Vous commandez depuis la Table ${numeroTable}</span>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">OPTION DE SERVICE</label>
+                        <select id="modeRetrait" class="form-select rounded-0 p-3" required>
+                            <option value="Sur place" selected>Manger Sur place</option>
+                            <option value="A emporter">Prendre en Plat emporter</option>
+                        </select>
+                    </div>
                     <input type="number" id="codeSessionInput" class="form-control mb-3 rounded-0 p-3 text-center fw-bold text-dark" placeholder="CODE DE LA TABLE (4 CHIFFRES)" style="letter-spacing:4px;" required>
                 `;
             } else {
-                // Formulaire pour commande à distance (Livraison / À emporter)
+                // Mode classique sans QR code de table
                 container.innerHTML = `
                     <input type="tel" id="clientPhone" class="form-control mb-3 rounded-0 p-3" placeholder="TÉLÉPHONE (Ex: 6xxxxxxx)" required>
                     <div class="mb-3">
@@ -268,9 +300,11 @@
         }
 
         function toggleAdresseField() {
-            const mode = document.getElementById('modeRetrait').value;
+            const modeField = document.getElementById('modeRetrait');
             const adresseField = document.getElementById('adresseLivraison');
-            if (mode === "A emporter") {
+            if (!modeField || !adresseField) return;
+
+            if (modeField.value === "A emporter") {
                 adresseField.style.display = "none";
                 adresseField.required = false;
                 adresseField.value = "";
@@ -391,14 +425,22 @@
 
             const clientName = document.getElementById('clientName').value;
             const totalOrder = cart.reduce((s, i) => s + (i.price * i.quantity), 0);
+            const selectedMode = document.getElementById('modeRetrait').value;
 
-            // Construction de l'objet de commande dynamique
+            // Définition propre de l'emplacement final
+            let emplacementFinal = "";
+            if (numeroTable) {
+                emplacementFinal = `Table ${numeroTable}`;
+            } else {
+                emplacementFinal = (selectedMode === "A emporter" ? "Retrait Resto" : document.getElementById('adresseLivraison').value);
+            }
+
             let orderPayload = {
                 NomClient: clientName,
                 Articles: cart,
                 Total: totalOrder,
-                Type: numeroTable ? "Sur place" : document.getElementById('modeRetrait').value,
-                Emplacement: numeroTable ? `Table ${numeroTable}` : (document.getElementById('modeRetrait').value === "A emporter" ? "Retrait Resto" : document.getElementById('adresseLivraison').value),
+                Type: selectedMode, 
+                Emplacement: emplacementFinal,
                 Telephone: numeroTable ? "Sur place" : document.getElementById('clientPhone').value,
                 CodeSession: numeroTable ? document.getElementById('codeSessionInput').value : ""
             };
@@ -445,9 +487,10 @@
                 cart = []; 
                 updateCart();
                 document.getElementById('orderForm').reset();
-                initFormFields(); // Réinitialise les champs spécifiques
+                initFormFields();
                 bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
             } catch (err) {
+                console.error(err);
                 alert("Erreur réseau lors de la validation. Réessayez.");
             } finally {
                 submitBtn.disabled = false;
