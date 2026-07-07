@@ -1,32 +1,32 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- SEO Standard -->
-    <title>Fortune Resto | Gastronomie & Excellence au Cameroun</title>
-    <meta name="description" content="Découvrez Fortune Resto à Douala, Akwa. Une symphonie de saveurs et une élégance intemporelle. Commandez en ligne sur place, à emporter ou en livraison.">
-    <meta name="keywords" content="Fortune Resto, Restaurant Douala, Akwa, Gastronomie Cameroun, Commander en ligne, Menu Fortune Resto">
+    <title>Fortune Resto | Gastronomy & Excellence in Cameroon</title>
+    <meta name="description" content="Discover Fortune Resto in Douala, Akwa. A symphony of flavors and timeless elegance. Order online for dine-in, takeaway, or delivery.">
+    <meta name="keywords" content="Fortune Resto, Douala Restaurant, Akwa, Cameroon Gastronomy, Order online, Fortune Resto Menu">
     <meta name="author" content="Trésor Mbe">
     <meta name="robots" content="index, follow">
 
-    <!-- Open Graph / Meta Partage (Facebook, WhatsApp, LinkedIn, Telegram) -->
+    <!-- Open Graph / Meta Sharing (Facebook, WhatsApp, LinkedIn, Telegram) -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://fortuneresto.com/">
-    <meta property="og:title" content="Fortune Resto | Gastronomie & Excellence au Cameroun">
-    <meta property="og:description" content="Une symphonie de saveurs, une élégance intemporelle. Découvrez notre carte et commandez directement depuis votre table ou chez vous.">
+    <meta property="og:title" content="Fortune Resto | Gastronomy & Excellence in Cameroon">
+    <meta property="og:description" content="A symphony of flavors, timeless elegance. Discover our menu and order directly from your table or home.">
     <meta property="og:image" content="https://i.postimg.cc/Y236Kcx4/0bb98b3c-fb63-4407-9dd1-bdce44d723c8.jpg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
 
     <!-- Twitter Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Fortune Resto | Gastronomie & Excellence au Cameroun">
-    <meta name="twitter:description" content="Une symphonie de saveurs, une élégance intemporelle. Découvrez notre carte et commandez directement.">
+    <meta name="twitter:title" content="Fortune Resto | Gastronomy & Excellence in Cameroon">
+    <meta name="twitter:description" content="A symphony of flavors, timeless elegance. Discover our menu and order directly.">
     <meta name="twitter:image" content="https://i.postimg.cc/Y236Kcx4/0bb98b3c-fb63-4407-9dd1-bdce44d723c8.jpg">
 
-    <!-- Favicon CORRIGÉ (Icône officielle affichée sur l'onglet et Google) -->
+    <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="https://i.postimg.cc/BbQttD8w/7469A604-11E0-42C3-9731-BC34039CEEB0.png">
     <link rel="icon" type="image/png" sizes="16x16" href="https://i.postimg.cc/BbQttD8w/7469A604-11E0-42C3-9731-BC34039CEEB0.png">
     <link rel="apple-touch-icon" href="https://i.postimg.cc/BbQttD8w/7469A604-11E0-42C3-9731-BC34039CEEB0.png">
@@ -136,7 +136,6 @@
 
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container">
-            <!-- LOGO CORRIGÉ ICI DANS LA NAVBAR -->
             <a class="navbar-brand" href="#">
                 <img src="https://i.postimg.cc/BbQttD8w/7469A604-11E0-42C3-9731-BC34039CEEB0.png" alt="Fortune Resto Logo">
                 <span class="brand-text ms-2">FORTUNE RESTO</span>
@@ -146,10 +145,10 @@
             </button>
             <div class="collapse navbar-collapse" id="mainNav">
                 <ul class="navbar-nav ms-auto align-items-center">
-                    <li class="nav-item"><a class="nav-link" href="#home">Accueil</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#menu">La Carte</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#home">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#menu">Menu</a></li>
                     <li class="nav-item ms-lg-4">
-                        <button class="btn btn-reservation" onclick="openCart()">Panier</button>
+                        <button class="btn btn-reservation" onclick="openCart()">Cart</button>
                     </li>
                 </ul>
             </div>
@@ -158,23 +157,23 @@
 
     <section class="hero" id="home">
         <div class="container text-center">
-            <h1 class="animate__animated animate__fadeInDown">L'Art de la Table</h1>
-            <p class="animate__animated animate__fadeInUp animate__delay-1s">Une symphonie de saveurs, une élégance intemporelle au Cameroon.</p>
-            <a href="#menu" class="btn btn-reservation btn-lg animate__animated animate__fadeInUp animate__delay-2s">Explorer le Menu</a>
+            <h1 class="animate__animated animate__fadeInDown">The Art of Dining</h1>
+            <p class="animate__animated animate__fadeInUp animate__delay-1s">A symphony of flavors, timeless elegance in Cameroon.</p>
+            <a href="#menu" class="btn btn-reservation btn-lg animate__animated animate__fadeInUp animate__delay-2s">Explore Menu</a>
         </div>
     </section>
 
     <section class="container-fluid px-md-5 my-5 py-5" id="menu">
         <div class="text-center mb-5">
-            <h6 class="text-uppercase text-muted" style="letter-spacing: 3px;">Gastronomie & Saveurs</h6>
-            <h2 class="display-3 fw-bold">Nos Créations</h2>
+            <h6 class="text-uppercase text-muted" style="letter-spacing: 3px;">Gastronomy & Flavors</h6>
+            <h2 class="display-3 fw-bold">Our Creations</h2>
             <div style="width: 60px; height: 4px; background: var(--gold); margin: 25px auto;"></div>
         </div>
 
         <div id="menuContainer" class="menu-grid">
             <div class="text-center w-100 py-5">
                 <div class="spinner-border text-warning" role="status"></div>
-                <p class="mt-3 text-muted">Préparation de la carte...</p>
+                <p class="mt-3 text-muted">Preparing the menu...</p>
             </div>
         </div>
     </section>
@@ -184,7 +183,7 @@
             <div class="row g-5">
                 <div class="col-lg-4">
                     <h4 class="footer-title">FORTUNE RESTO</h4>
-                    <p class="lh-lg">Découvrez l'harmonie parfaite entre tradition et modernité. Chaque ingrédient est sélectionné avec le plus grand soin pour vous offrir une expérience sensorielle unique au Cameroun.</p>
+                    <p class="lh-lg">Discover the perfect harmony between tradition and modernity. Each ingredient is carefully selected to offer you a unique sensory experience in Cameroon.</p>
                     <div class="social-icons mt-4">
                         <a href="#"><i class="fab fa-instagram"></i></a>
                         <a href="#"><i class="fab fa-facebook-f"></i></a>
@@ -193,16 +192,16 @@
                 <div class="col-lg-2 offset-lg-1">
                     <h4 class="footer-title">Menu</h4>
                     <ul class="footer-links">
-                        <li><a href="#home">Accueil</a></li>
-                        <li><a href="#menu">La Carte</a></li>
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#menu">Menu</a></li>
                     </ul>
                 </div>
                 <div class="col-lg-2">
-                    <h4 class="footer-title">Horaires</h4>
+                    <h4 class="footer-title">Hours</h4>
                     <ul class="footer-links">
-                        <li>Midi : 12h00 - 14h30</li>
-                        <li>Soir : 19h00 - 23h00</li>
-                        <li>Ouvert 7j/7</li>
+                        <li>Lunch: 12:00 PM - 2:30 PM</li>
+                        <li>Dinner: 7:00 PM - 11:00 PM</li>
+                        <li>Open 7 days a week</li>
                     </ul>
                 </div>
                 <div class="col-lg-3">
@@ -212,7 +211,7 @@
                 </div>
             </div>
             <div class="footer-bottom text-center mt-5 pt-4 border-top">
-                <p class="m-0">&copy; 2026 Fortune Resto. Développé par <a href="#" class="text-gold text-decoration-none">Trésor Mbe</a></p>
+                <p class="m-0">&copy; 2026 Fortune Resto. Developed by <a href="#" class="text-gold text-decoration-none">Trésor Mbe</a></p>
             </div>
         </div>
     </footer>
@@ -226,7 +225,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 rounded-0">
                 <div class="modal-header bg-dark text-white rounded-0 py-3">
-                    <h5 class="modal-title fw-bold">VOTRE PANIER</h5>
+                    <h5 class="modal-title fw-bold">YOUR CART</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
@@ -237,11 +236,11 @@
                     </div>
                     
                     <form id="orderForm" class="mt-4">
-                        <input type="text" id="clientName" class="form-control mb-3 rounded-0 p-3" placeholder="NOM COMPLET" required>
+                        <input type="text" id="clientName" class="form-control mb-3 rounded-0 p-3" placeholder="FULL NAME" required>
                         
                         <div id="dynamicFormFields"></div>
 
-                        <button type="submit" id="submitOrderBtn" class="btn btn-reservation w-100 py-3 fw-bold mt-2">VALIDER LA COMMANDE</button>
+                        <button type="submit" id="submitOrderBtn" class="btn btn-reservation w-100 py-3 fw-bold mt-2">PLACE ORDER</button>
                     </form>
                 </div>
             </div>
@@ -265,7 +264,7 @@
         });
 
         function formatPrice(amount) {
-            return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
+            return new Intl.NumberFormat('en-US').format(amount) + ' FCFA';
         }
 
         function initFormFields() {
@@ -273,28 +272,28 @@
             if (numeroTable) {
                 container.innerHTML = `
                     <div class="p-3 mb-3 bg-light border text-center">
-                        <span class="fw-bold text-success"><i class="fas fa-chair me-2"></i> Vous commandez depuis la Table ${numeroTable}</span>
+                        <span class="fw-bold text-success"><i class="fas fa-chair me-2"></i> You are ordering from Table ${numeroTable}</span>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold small text-muted">OPTION DE SERVICE</label>
+                        <label class="form-label fw-bold small text-muted">SERVICE OPTION</label>
                         <select id="modeRetrait" class="form-select rounded-0 p-3" required>
-                            <option value="Sur place" selected>Manger Sur place</option>
-                            <option value="A emporter">Prendre en Plat emporter</option>
+                            <option value="Sur place" selected>Dine-in</option>
+                            <option value="A emporter">Takeaway</option>
                         </select>
                     </div>
-                    <input type="number" id="codeSessionInput" class="form-control mb-3 rounded-0 p-3 text-center fw-bold text-dark" placeholder="CODE DE LA TABLE (4 CHIFFRES)" style="letter-spacing:4px;" required>
+                    <input type="number" id="codeSessionInput" class="form-control mb-3 rounded-0 p-3 text-center fw-bold text-dark" placeholder="TABLE CODE (4 DIGITS)" style="letter-spacing:4px;" required>
                 `;
             } else {
                 container.innerHTML = `
-                    <input type="tel" id="clientPhone" class="form-control mb-3 rounded-0 p-3" placeholder="TÉLÉPHONE (Ex: 6xxxxxxx)" required>
+                    <input type="tel" id="clientPhone" class="form-control mb-3 rounded-0 p-3" placeholder="PHONE NUMBER (e.g. 6xxxxxxx)" required>
                     <div class="mb-3">
-                        <label class="form-label fw-bold small text-muted">MODE DE RETRAIT</label>
+                        <label class="form-label fw-bold small text-muted">DELIVERY TYPE</label>
                         <select id="modeRetrait" class="form-select rounded-0 p-3" onchange="toggleAdresseField()">
-                            <option value="Livraison">En Livraison</option>
-                            <option value="A emporter">À emporter (Click & Collect)</option>
+                            <option value="Livraison">Delivery</option>
+                            <option value="A emporter">Takeaway (Click & Collect)</option>
                         </select>
                     </div>
-                    <textarea id="adresseLivraison" class="form-control mb-3 rounded-0 p-3" placeholder="QUARTIER ET PRÉCISIONS DE LIVRAISON" rows="2" required></textarea>
+                    <textarea id="adresseLivraison" class="form-control mb-3 rounded-0 p-3" placeholder="NEIGHBORHOOD & DELIVERY DETAILS" rows="2" required></textarea>
                 `;
             }
         }
@@ -321,14 +320,14 @@
                 const container = document.getElementById('menuContainer');
                 
                 if (!data || !Array.isArray(data) || data.length === 0 || data.error) {
-                    container.innerHTML = `<div class="text-center w-100 py-5"><p class="text-muted">Aucun plat disponible.</p></div>`;
+                    container.innerHTML = `<div class="text-center w-100 py-5"><p class="text-muted">No items available.</p></div>`;
                     return;
                 }
                 
                 const visibleItems = data.filter(i => i && (i.Disponible === true || i.Disponible === "Oui" || i.Disponible === "true"));
 
                 if (visibleItems.length === 0) {
-                    container.innerHTML = `<div class="text-center w-100 py-5"><p class="text-muted">Aucun plat disponible.</p></div>`;
+                    container.innerHTML = `<div class="text-center w-100 py-5"><p class="text-muted">No items available.</p></div>`;
                     return;
                 }
 
@@ -346,15 +345,15 @@
                                     <p class="text-muted small mb-4">${description}</p>
                                 </div>
                                 <button class="btn btn-outline-dark rounded-0 w-100 fw-bold mt-auto" onclick="addToCart('${item.Nom.replace(/'/g, "\\'")}', ${item.Prix})">
-                                    AJOUTER AU PANIER
+                                    ADD TO CART
                                 </button>
                             </div>
                         </div>
                     `;
                 }).join('');
             } catch (e) {
-                console.error("Erreur API Menu", e);
-                document.getElementById('menuContainer').innerHTML = `<div class="text-center w-100 py-5 text-danger"><p>Erreur réseau ou format de données incorrect.</p></div>`;
+                console.error("Menu API Error", e);
+                document.getElementById('menuContainer').innerHTML = `<div class="text-center w-100 py-5 text-danger"><p>Network error or incorrect data format.</p></div>`;
             }
         }
 
@@ -391,7 +390,7 @@
             
             const list = document.getElementById('cartList');
             if (cart.length === 0) {
-                list.innerHTML = '<p class="text-center text-muted m-0 py-3">Votre panier est vide</p>';
+                list.innerHTML = '<p class="text-center text-muted m-0 py-3">Your cart is empty</p>';
                 document.getElementById('cartTotal').innerText = "0 FCFA";
                 return;
             }
@@ -431,22 +430,22 @@
             if (numeroTable) {
                 emplacementFinal = `Table ${numeroTable}`;
             } else {
-                emplacementFinal = (selectedMode === "A emporter" ? "Retrait Resto" : document.getElementById('adresseLivraison').value);
+                emplacementFinal = (selectedMode === "A emporter" ? "Store Pickup" : document.getElementById('adresseLivraison').value);
             }
 
             let orderPayload = {
                 NomClient: clientName,
                 Articles: cart,
                 Total: totalOrder,
-                Type: selectedMode, 
+                Type: selectedMode === "Livraison" ? "Delivery" : (selectedMode === "A emporter" ? "Takeaway" : "Dine-in"), 
                 Emplacement: emplacementFinal,
-                Telephone: numeroTable ? "Sur place" : document.getElementById('clientPhone').value,
+                Telephone: numeroTable ? "On-site" : document.getElementById('clientPhone').value,
                 CodeSession: numeroTable ? document.getElementById('codeSessionInput').value : ""
             };
 
             const submitBtn = document.getElementById('submitOrderBtn');
             submitBtn.disabled = true;
-            submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>ENVOI EN COURS...`;
+            submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>SENDING...`;
 
             try {
                 const response = await fetch(`${API_URL}?action=addOrder`, {
@@ -455,17 +454,17 @@
                 }).then(r => r.json());
 
                 if(response.error || response.success === false) {
-                    alert("❌ " + (response.error || response.message || "Code de table incorrect. Veuillez demander le code valide au serveur."));
+                    alert("❌ " + (response.error || response.message || "Incorrect table code. Please request the valid session code from your server."));
                     submitBtn.disabled = false;
-                    submitBtn.innerHTML = `VALIDER LA COMMANDE`;
+                    submitBtn.innerHTML = `PLACE ORDER`;
                     return;
                 }
 
-                let whatsappMessage = `*✨ NOUVELLE COMMANDE FORTUNE RESTO * \n\n`;
-                whatsappMessage += `👤 *Client :* ${clientName}\n`;
-                whatsappMessage += `🏷️ *Type :* ${orderPayload.Type}\n`;
-                whatsappMessage += `📍 *Lieu / Table :* ${orderPayload.Emplacement}\n`;
-                if(!numeroTable) whatsappMessage += `📞 *Téléphone :* ${orderPayload.Telephone}\n`;
+                let whatsappMessage = `*✨ NEW FORTUNE RESTO ORDER * \n\n`;
+                whatsappMessage += `👤 *Customer:* ${clientName}\n`;
+                whatsappMessage += `🏷️ *Type:* ${orderPayload.Type}\n`;
+                whatsappMessage += `📍 *Location / Table:* ${orderPayload.Emplacement}\n`;
+                if(!numeroTable) whatsappMessage += `📞 *Phone:* ${orderPayload.Telephone}\n`;
                 whatsappMessage += `───────────────\n`;
                 
                 cart.forEach(item => {
@@ -473,13 +472,13 @@
                 });
                 
                 whatsappMessage += `───────────────\n`;
-                whatsappMessage += `💰 *TOTAL À PAYER : ${formatPrice(totalOrder)}*\n\n`;
-                whatsappMessage += `*Merci de confirmer ma commande !*`;
+                whatsappMessage += `💰 *TOTAL TO PAY: ${formatPrice(totalOrder)}*\n\n`;
+                whatsappMessage += `*Please confirm my order!*`;
 
                 const encodedText = encodeURIComponent(whatsappMessage);
                 const whatsappURL = `https://wa.me/${RESTO_WHATSAPP}?text=${encodedText}`;
 
-                alert("🎉 Commande validée avec succès en cuisine ! Vous allez être redirigé vers WhatsApp.");
+                alert("🎉 Order successfully validated in the kitchen! Redirecting you to WhatsApp.");
                 window.open(whatsappURL, '_blank');
 
                 cart = []; 
@@ -489,10 +488,10 @@
                 bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
             } catch (err) {
                 console.error(err);
-                alert("Erreur réseau lors de la validation. Réessayez.");
-            } finally {
+                alert("Network error during validation. Please try again.");
+            } finaly {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = `VALIDER LA COMMANDE`;
+                submitBtn.innerHTML = `PLACE ORDER`;
             }
         };
 
