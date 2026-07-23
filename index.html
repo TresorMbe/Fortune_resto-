@@ -11,7 +11,7 @@
     <meta name="author" content="Trésor Mbe">
     <meta name="robots" content="index, follow">
 
-    <!-- Open Graph / Share Meta (Facebook, WhatsApp, LinkedIn, Telegram) -->
+    <!-- Open Graph / Share Meta -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://fortuneresto.com/">
     <meta property="og:title" content="Fortune Resto | Gastronomy & Excellence in Cameroon">
@@ -26,7 +26,7 @@
     <meta name="twitter:description" content="A symphony of flavors, timeless elegance. Discover our menu and order directly.">
     <meta name="twitter:image" content="https://i.postimg.cc/Y236Kcx4/0bb98b3c-fb63-4407-9dd1-bdce44d723c8.jpg">
 
-    <!-- CORRECTED Favicon (Official icon displayed on tab and Google) -->
+    <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="https://i.postimg.cc/BbQttD8w/7469A604-11E0-42C3-9731-BC34039CEEB0.png">
     <link rel="icon" type="image/png" sizes="16x16" href="https://i.postimg.cc/BbQttD8w/7469A604-11E0-42C3-9731-BC34039CEEB0.png">
     <link rel="apple-touch-icon" href="https://i.postimg.cc/BbQttD8w/7469A604-11E0-42C3-9731-BC34039CEEB0.png">
@@ -124,6 +124,21 @@
         .cart-trigger:hover { transform: scale(1.1) rotate(10deg); }
         .cart-count { position: absolute; top: 0; right: 0; background: var(--dark); color: white; width: 28px; height: 28px; border-radius: 50%; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; font-weight: bold; }
 
+        /* Style pour les options de paiement Mobile Money */
+        .payment-option {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .payment-option:hover { border-color: var(--gold); }
+        .payment-option.active { border-color: var(--gold); background-color: #fffdf5; }
+        .payment-logo { height: 35px; width: auto; object-fit: contain; }
+
         @media (max-width: 768px) {
             .hero h1 { font-size: 3.2rem; }
             .navbar-brand img { height: 45px; }
@@ -136,7 +151,6 @@
 
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container">
-            <!-- LOGO CORRECTED HERE IN THE NAVBAR -->
             <a class="navbar-brand" href="#">
                 <img src="https://i.postimg.cc/BbQttD8w/7469A604-11E0-42C3-9731-BC34039CEEB0.png" alt="Fortune Resto Logo">
                 <span class="brand-text ms-2">FORTUNE RESTO</span>
@@ -222,6 +236,7 @@
         <div class="cart-count" id="cartCount">0</div>
     </div>
 
+    <!-- MODAL PANIER -->
     <div class="modal fade" id="cartModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 rounded-0">
@@ -241,8 +256,60 @@
                         
                         <div id="dynamicFormFields"></div>
 
-                        <button type="submit" id="submitOrderBtn" class="btn btn-reservation w-100 py-3 fw-bold mt-2">VALIDATE ORDER</button>
+                        <button type="submit" id="submitOrderBtn" class="btn btn-reservation w-100 py-3 fw-bold mt-2">PROCEED TO PAYMENT</button>
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SIMULATION PAIEMENT -->
+    <div class="modal fade" id="paymentModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-0">
+                <div class="modal-header bg-dark text-white rounded-0 py-3">
+                    <h5 class="modal-title fw-bold">MOBILE MONEY PAYMENT</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" id="closePaymentBtn"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="text-center mb-3">
+                        <span class="text-muted small">AMOUNT TO PAY</span>
+                        <h2 class="fw-bold text-dark mt-1" id="paymentAmountDisplay">0 FCFA</h2>
+                    </div>
+
+                    <div id="paymentOptionsStep">
+                        <label class="form-label fw-bold small text-muted mb-2">SELECT PROVIDER</label>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <div class="payment-option active" id="optMTN" onclick="selectProvider('MTN')">
+                                    <div class="fw-bold small">MTN MoMo</div>
+                                    <span class="badge bg-warning text-dark fw-bold">MTN</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="payment-option" id="optOrange" onclick="selectProvider('Orange')">
+                                    <div class="fw-bold small">Orange Money</div>
+                                    <span class="badge bg-danger text-white fw-bold">OM</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">PAYMENT PHONE NUMBER</label>
+                            <input type="tel" id="paymentPhone" class="form-control rounded-0 p-3" placeholder="6xxxxxxxx" required>
+                        </div>
+
+                        <button type="button" class="btn btn-reservation w-100 py-3 fw-bold mt-2" onclick="processPayment()">
+                            <i class="fas fa-lock me-2"></i>CONFIRM & PAY
+                        </button>
+                    </div>
+
+                    <!-- STEP LOADER DE PAIEMENT SIMULÉ -->
+                    <div id="paymentProcessingStep" class="text-center py-4" style="display: none;">
+                        <div class="spinner-border text-warning mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
+                        <h5 class="fw-bold mb-2">Push notification sent!</h5>
+                        <p class="text-muted small mb-0" id="paymentInstructionText">Please approve the payment transaction on your phone (*126# or *150#)...</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -254,6 +321,8 @@
         const RESTO_WHATSAPP = "237675747882"; 
 
         let cart = [];
+        let selectedProvider = "MTN";
+        let pendingOrderData = null;
         
         const urlParams = new URLSearchParams(window.location.search);
         const numeroTable = urlParams.get('table');
@@ -265,7 +334,7 @@
         });
 
         function formatPrice(amount) {
-            return new Intl.NumberFormat('en-US').format(amount) + ' FCFA'; // Kept FCFA as it's a currency, changed locale for formatting
+            return new Intl.NumberFormat('en-US').format(amount) + ' FCFA';
         }
 
         function initFormFields() {
@@ -419,7 +488,8 @@
             bootstrap.Modal.getOrCreateInstance(document.getElementById('cartModal')).show(); 
         }
 
-        document.getElementById('orderForm').onsubmit = async (e) => {
+        // ETAPE 1 : INTERCEPTION DU FORMULAIRE ET OUVERTURE DU PAIEMENT
+        document.getElementById('orderForm').onsubmit = (e) => {
             e.preventDefault();
             if(cart.length === 0) return;
 
@@ -434,67 +504,118 @@
                 emplacementFinal = (selectedMode === "A emporter" ? "Restaurant Pickup" : document.getElementById('adresseLivraison').value);
             }
 
-            let orderPayload = {
+            const phoneVal = numeroTable ? "Dine-in" : document.getElementById('clientPhone').value;
+
+            // Préparation du payload
+            pendingOrderData = {
                 NomClient: clientName,
                 Articles: cart,
                 Total: totalOrder,
                 Type: selectedMode, 
                 Emplacement: emplacementFinal,
-                Telephone: numeroTable ? "Dine-in" : document.getElementById('clientPhone').value,
+                Telephone: phoneVal,
                 CodeSession: numeroTable ? document.getElementById('codeSessionInput').value : ""
             };
 
-            const submitBtn = document.getElementById('submitOrderBtn');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>SENDING...`;
-
-            try {
-                const response = await fetch(`${API_URL}?action=addOrder`, {
-                    method: 'POST',
-                    body: JSON.stringify({order: orderPayload})
-                }).then(r => r.json());
-
-                if(response.error || response.success === false) {
-                    alert("❌ " + (response.error || response.message || "Incorrect table code. Please ask the server for the valid code."));
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = `VALIDATE ORDER`;
-                    return;
-                }
-
-                let whatsappMessage = `*✨ NEW FORTUNE RESTO ORDER * \n\n`;
-                whatsappMessage += `👤 *Client :* ${clientName}\n`;
-                whatsappMessage += `🏷️ *Type :* ${orderPayload.Type}\n`;
-                whatsappMessage += `📍 *Location / Table :* ${orderPayload.Emplacement}\n`;
-                if(!numeroTable) whatsappMessage += `📞 *Phone :* ${orderPayload.Telephone}\n`;
-                whatsappMessage += `───────────────\n`;
-                
-                cart.forEach(item => {
-                    whatsappMessage += `🍴 ${item.quantity}x _${item.name}_ (${formatPrice(item.price * item.quantity)})\n`;
-                });
-                
-                whatsappMessage += `───────────────\n`;
-                whatsappMessage += `💰 *TOTAL TO PAY : ${formatPrice(totalOrder)}*\n\n`;
-                whatsappMessage += `*Please confirm my order!*`;
-
-                const encodedText = encodeURIComponent(whatsappMessage);
-                const whatsappURL = `https://wa.me/${RESTO_WHATSAPP}?text=${encodedText}`;
-
-                alert("🎉 Order successfully validated in the kitchen! You will be redirected to WhatsApp.");
-                window.open(whatsappURL, '_blank');
-
-                cart = []; 
-                updateCart();
-                document.getElementById('orderForm').reset();
-                initFormFields();
-                bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
-            } catch (err) {
-                console.error(err);
-                alert("Network error during validation. Please try again.");
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = `VALIDATE ORDER`;
+            // Ferme le panier et pré-remplit la modale de paiement
+            bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
+            
+            document.getElementById('paymentAmountDisplay').innerText = formatPrice(totalOrder);
+            if (!numeroTable && phoneVal) {
+                document.getElementById('paymentPhone').value = phoneVal;
             }
+
+            // Affiche la modale de paiement
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('paymentModal')).show();
         };
+
+        // CHOIX DE L'OPERATEUR
+        function selectProvider(provider) {
+            selectedProvider = provider;
+            document.getElementById('optMTN').classList.toggle('active', provider === 'MTN');
+            document.getElementById('optOrange').classList.toggle('active', provider === 'Orange');
+        }
+
+        // ETAPE 2 & 3 : SIMULATION PAIEMENT ET VALIDATION KITCHEN
+        async function processPayment() {
+            const payPhone = document.getElementById('paymentPhone').value;
+            if (!payPhone) {
+                alert("Please enter a valid Mobile Money number.");
+                return;
+            }
+
+            // Basculer vers le mode chargement
+            document.getElementById('paymentOptionsStep').style.display = "none";
+            document.getElementById('paymentProcessingStep').style.display = "block";
+            document.getElementById('closePaymentBtn').style.display = "none";
+
+            document.getElementById('paymentInstructionText').innerText = 
+                `Please approve the ${selectedProvider} Mobile Money prompt sent to ${payPhone} (*126# / *150#)...`;
+
+            // Simulation d'attente de validation USSD (3 secondes)
+            setTimeout(async () => {
+                try {
+                    // Envoi effectif de la commande au serveur backend
+                    const response = await fetch(`${API_URL}?action=addOrder`, {
+                        method: 'POST',
+                        body: JSON.stringify({ order: pendingOrderData })
+                    }).then(r => r.json());
+
+                    if (response.error || response.success === false) {
+                        alert("❌ " + (response.error || response.message || "Incorrect table code or invalid data."));
+                        resetPaymentModal();
+                        return;
+                    }
+
+                    // Fermer la modale de paiement
+                    bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
+
+                    // Message d'alerte exact (capture d'écran)
+                    alert("🎉 Order successfully validated in the kitchen! You will be redirected to WhatsApp.");
+
+                    // Construction du message WhatsApp
+                    let whatsappMessage = `*✨ NEW FORTUNE RESTO ORDER (PAID via ${selectedProvider}) * \n\n`;
+                    whatsappMessage += `👤 *Client :* ${pendingOrderData.NomClient}\n`;
+                    whatsappMessage += `🏷️ *Type :* ${pendingOrderData.Type}\n`;
+                    whatsappMessage += `📍 *Location / Table :* ${pendingOrderData.Emplacement}\n`;
+                    if (!numeroTable) whatsappMessage += `📞 *Phone :* ${pendingOrderData.Telephone}\n`;
+                    whatsappMessage += `💳 *Payment :* ${selectedProvider} MoMo (${payPhone}) - PAID ✅\n`;
+                    whatsappMessage += `───────────────\n`;
+                    
+                    cart.forEach(item => {
+                        whatsappMessage += `🍴 ${item.quantity}x _${item.name}_ (${formatPrice(item.price * item.quantity)})\n`;
+                    });
+                    
+                    whatsappMessage += `───────────────\n`;
+                    whatsappMessage += `💰 *TOTAL PAID : ${formatPrice(pendingOrderData.Total)}*\n\n`;
+                    whatsappMessage += `*Please confirm my order!*`;
+
+                    const encodedText = encodeURIComponent(whatsappMessage);
+                    const whatsappURL = `https://wa.me/${RESTO_WHATSAPP}?text=${encodedText}`;
+
+                    // Redirection WhatsApp
+                    window.open(whatsappURL, '_blank');
+
+                    // Reset global
+                    cart = []; 
+                    updateCart();
+                    document.getElementById('orderForm').reset();
+                    initFormFields();
+                    resetPaymentModal();
+
+                } catch (err) {
+                    console.error(err);
+                    alert("Network error during payment validation. Please try again.");
+                    resetPaymentModal();
+                }
+            }, 3000);
+        }
+
+        function resetPaymentModal() {
+            document.getElementById('paymentOptionsStep').style.display = "block";
+            document.getElementById('paymentProcessingStep').style.display = "none";
+            document.getElementById('closePaymentBtn').style.display = "block";
+        }
 
         window.onload = () => {
             loadMenu();
